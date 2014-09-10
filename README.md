@@ -1,4 +1,4 @@
-ECE382
+ECE382 - Richter
 ======
 
-Lab Notebooks for ECE 382
+Evan Richter's lab notebooks for ECE 382

@@ -23,6 +23,7 @@ clear:	.equ	0x44
 end:	.equ	0x55
 
 input:	.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
+;				11		+	11		+	11		clr  22    -	 22    +     cc    end
 ;-------------------------------------------------------------------------------
 ;          		main: steps through input string with a case switch
 ;
@@ -37,6 +38,8 @@ main:
 	mov.b	#0x00, R6
 	mov.w	#0x0200, R7
 	mov.w	#input, R5
+
+	jmp 	enternum				; first value always is number not operation
 
 checkend:
 	cmp.b	#end, 0(R5)
@@ -84,7 +87,7 @@ checkclear:
 	mov.b	#0x00, 0(R7)
 	inc.w	R7
 	inc.w	R5
-	mov.b	R5, R6
+	mov.b	@R5+, R6
 	jmp		checkend
 
 enternum:

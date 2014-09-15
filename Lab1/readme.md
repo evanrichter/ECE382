@@ -77,6 +77,17 @@ enternum:
 	mov.b	@R5+, R6
 	jmp		checkend
 ```
+### Storing results with `save`
+
+The set of instructions under `save` simply copies the value in the accumulator into the RAM address pointed to by `R7`. It then increases `R7` to point to the next available byte in RAM before looping back to check the operation. At this point, `R5` has already been post-incremented, so it indeed points to an operation.
+
+```Assembly
+save:
+	mov.b	R6, 0(R7)
+	inc.w	R7
+	jmp		checkend
+```
+
 
 ### A glance at `MUL_OP`
 I will briefly discuss my implementation of a multiplication function.
@@ -126,6 +137,9 @@ When debugging my program, I would run test cases that tested the particular ope
 
 Conclusion & Lessons Learned
 ---
+Here is a screenshot of the memory browser after the test case for A functionality was run.
+![](./images/working_A_func.png "works!")
+
 
 
 Documentation

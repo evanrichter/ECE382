@@ -51,24 +51,30 @@ checkplus:
 	jnz		checkminus
 	inc.w	R5
 	add.b	@R5+, R6
-	jnc		nocarryplus
+	jnc		nocarry
 	mov.w	#0xFF, R6				; B functionality
-nocarryplus:
+nocarry:
 	jmp		save
 
 checkminus:
 	cmp.b	#minus, 0(R5)
 	jnz		checktimes
 	inc.w	R5
+	cmp.b	@R5, R6					; R6 >= R5?
+	jge		notnegative				; yes: goto notnegative
+	mov.w	#0x00, R6
+	inc.w	R5
+	jmp		save
+notnegative:
 	sub.b	@R5+, R6
-	jnc		nocarryminus
-	mov		#0x00, R6
-nocarryminus:
 	jmp		save
 
 checktimes:							; multiplication using Peasant Multiplication method
 	cmp.b	#times, 0(R5)
 	jnz		checkclear
+	inc.w	R5
+	cmp.b	#0x00, 0(R5)
+	jz		zero
 	push.w	R7						; preserve R7
 	mov.b	@R5+, R7
 	mov.w	#0x00, R8				; R8 holds the final answer as R6 doubles
@@ -85,6 +91,10 @@ even:
 done:
 	mov.w	R8, R6
 	pop.w	R7
+	jmp		save
+zero:
+	inc.w	R5
+	mov.b	#0x00, R6
 	jmp		save
 
 checkclear:

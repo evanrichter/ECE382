@@ -22,8 +22,9 @@ times:	.equ	0x33
 clear:	.equ	0x44
 end:	.equ	0x55
 
-input:	.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xDD, 0x44, 0x08, 0x22, 0x09, 0x44, 0xFF, 0x22, 0xFD, 0x55
-;				11		+	11		+	11		+	11		+	 dd	   clr   8     -     9     clr   ff    -     fd    end
+input:	.byte	0x22, 0x11, 0x22, 0x22, 0x33, 0x33, 0x08, 0x44, 0x08, 0x22, 0x09, 0x44, 0xff, 0x11, 0xff, 0x44, 0xcc, 0x33, 0x02, 0x33, 0x00, 0x44, 0x33, 0x33, 0x08, 0x55
+;				 22    +      22    -    33    x      8    clr   8      -    9     clr   ff    +     ff    clr   cc    x      2     x     0    clr   33    x      8    end
+;							  44		 11			 88    00                00     00               ff    00            198->ff          00    00             198->ff
 ;-------------------------------------------------------------------------------
 ;          		main: steps through input string with a case switch
 ;
@@ -35,7 +36,7 @@ main:
 	mov.w   #__STACK_END,SP			; BOILERPLATE	Initialize stackpointer
 	mov.w   #WDTPW|WDTHOLD,&WDTCTL 	; BOILERPLATE	Stop watchdog timer
 
-	mov.b	#0x00, R6
+	mov.w	#0x00, R6
 	mov.w	#0x0200, R7
 	mov.w	#input, R5
 
@@ -76,21 +77,26 @@ checktimes:							; multiplication using Peasant Multiplication method
 	cmp.b	#0x00, 0(R5)
 	jz		zero
 	push.w	R7						; preserve R7
+	mov.w	#0x00, R7
 	mov.b	@R5+, R7
 	mov.w	#0x00, R8				; R8 holds the final answer as R6 doubles
 checkdone:
-	cmp.b	#0x0, R7
+	cmp.w	#0x00, R7
 	jz		done
 	bit.b	#0x1, R7				; checks even-ness of R7
 	jz		even
-	add.b	R6, R8
+	add.w	R6, R8
 even:
-	rra.b	R7						; R7 halves
-	rla.b	R6						; R6 doubles
+	rra.w	R7						; R7 halves
+	rla.w	R6						; R6 doubles
 	jmp		checkdone
 done:
-	mov.w	R8, R6
 	pop.w	R7
+	cmp.w	#0x100, R8				; R8 < 0x100?
+	jl		goodmult				; yes: goto goodmult
+	mov.w	#0xFF, R8				; no: product was too big
+goodmult:
+	mov.w	R8, R6
 	jmp		save
 zero:
 	inc.w	R5

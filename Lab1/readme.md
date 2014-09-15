@@ -118,28 +118,15 @@ goodmult:
 	jmp		save
 ```
 
-Debugging
+Debugging & Testing
+---
+### Method
+When debugging my program, I would run test cases that tested the particular operation I was working on. Setting a breakpoint to the first instruction of the operation would pause the execution at an appropriate time. I had the register window and the memory browser open at all times as I stepped through the program. I would fill the RAM to `0xAA` so that new values would stand out in red.
+
+
+Conclusion & Lessons Learned
 ---
 
-Testing
----
-
-Implementation plan <<insert photo of attack plan>>
-Discuss code with code blocks
-
-```Assembly
-plus:	.equ	0x11
-minus:	.equ	0x22
-times:	.equ	0x33
-clear:	.equ	0x44
-end:	.equ	0x55
-```
-
-Debugging and testing
----
-
-Conclusion & lessons learned
----
 
 Documentation
 ---

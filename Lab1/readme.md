@@ -29,5 +29,11 @@ end:	.equ	0x55
 ```
 
 Debugging and testing
+---
 
 Conclusion & lessons learned
+---
+
+Documentation
+---
+I referenced Taylor Bodin's [lab 1 notebook](https://github.com/taylorbodin/ECE382_Lab1/blob/master/README.md) to see general formatting of the `readme.md` markdown file, and the overall flow of the lab report.

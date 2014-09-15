@@ -4,7 +4,10 @@
 ;	MCU:			MSP430G2553
 ;	Assignment:		3
 ;	Date:			10 September 2014
-;	Documentation:
+;	Documentation:	MSP430 CPU Instruction Set
+;					"Peasant Multiplication" from English Wikipedia
+;					<http://en.wikipedia.org/wiki/Multiplication_algorithm#Peasant_or_binary_multiplication>
+;					no cadet help
 ;-------------------------------------------------------------------------------
 	.cdecls C,LIST,"msp430.h"	; BOILERPLATE	Include device header file
  	.text						; BOILERPLATE	Assemble into program memory
@@ -19,7 +22,7 @@ times:	.equ	0x33
 clear:	.equ	0x44
 end:	.equ	0x55
 
-input:	.byte	0x21, 0x22, 0x01,  0x11,  0x19,  0x44,  0x15,  0x22,  0x05,  0x55
+input:	.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
 ;-------------------------------------------------------------------------------
 ;          		main: steps through input string with a case switch
 ;
@@ -54,11 +57,25 @@ checkminus:
 	sub.b	@R5+, R6
 	jmp		save
 
-checktimes:
+checktimes:							; multiplication using Peasant Multiplication method
 	cmp.b	#times, 0(R5)
 	jnz		checkclear
-	inc.w	R5
-
+	push.w	R7						; preserve R7
+	mov.b	@R5+, R7
+	mov.w	#0x00, R8				; R8 holds the final answer as R6 doubles
+checkdone:
+	cmp.b	#0x0, R7
+	jz		done
+	bit.b	#0x1, R7				; checks even-ness of R7
+	jz		even
+	add.b	R6, R8
+even:
+	rra.b	R7						; R7 halves
+	rla.b	R6						; R6 doubles
+	jmp		checkdone
+done:
+	mov.w	R8, R6
+	pop.w	R7
 	jmp		save
 
 checkclear:

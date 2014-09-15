@@ -85,8 +85,8 @@ My first strategy was to implement multiplication in a similar way to how I woul
 ![](./images/lab1_mult_1.bmp "first attack")
 
 I had trouble figuring out an algorithm that would accomplish that, so I investigated [Peasant Multiplication](http://en.wikipedia.org/wiki/Multiplication_algorithm#Peasant_or_binary_multiplication) as suggested by [C2C Eric Wardner](https://github.com/EricWardner). Upon later inspection, I realize that it is exactly the same process as multiplying binary numbers by hand. This was a good resource to better visualize and understand the concept. I came up with the following algorithm:
-![](./images/lab1_mult_2.bmp "second attack")
 *note: I didn't need to hard-code multiply by zero after all*
+![](./images/lab1_mult_2.bmp "second attack")
 
 
 ```Assembly

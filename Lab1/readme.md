@@ -140,6 +140,7 @@ Conclusion & Lessons Learned
 Here is a screenshot of the memory browser after the test case for A functionality was run.
 ![](./images/working_A_func.png "works!")
 
+In this lab I learned the importance of stepping through the test cases by hand so that intermediate results can be checked. Performing hand calculations and watching the debugger step through the program was the biggest way I found bugs.
 
 
 Documentation

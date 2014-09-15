@@ -3,9 +3,7 @@ Simple Calculator Lab
 
 Objectives & Purpose
 ---
-Typing typing typing.
-
-next line.
+This lab's objective is to give me practice in the assembly programming skills I have learned in class. Specific objectives include using the instruction set, addressing modes, conditional jumps, status register flags, assembler directives, and the assembly process effectively. The program I am implementing will take a series of operands and operations and store the results. It is a basic calculator.
 
 Preliminary Design
 ---

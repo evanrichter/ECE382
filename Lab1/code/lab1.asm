@@ -23,6 +23,7 @@ clear:	.equ	0x44
 end:	.equ	0x55
 
 input:	.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xDD, 0x44, 0x08, 0x22, 0x09, 0x44, 0xFF, 0x22, 0xFD, 0x55
+;				11		+	11		+	11		+	11		+	 dd	   clr   8     -     9     clr   ff    -     fd    end
 ;-------------------------------------------------------------------------------
 ;          		main: steps through input string with a case switch
 ;
@@ -50,9 +51,9 @@ checkplus:
 	jnz		checkminus
 	inc.w	R5
 	add.b	@R5+, R6
-	jnc		nocarry
+	jnc		nocarryplus
 	mov.w	#0xFF, R6				; B functionality
-nocarry:
+nocarryplus:
 	jmp		save
 
 checkminus:
@@ -60,6 +61,9 @@ checkminus:
 	jnz		checktimes
 	inc.w	R5
 	sub.b	@R5+, R6
+	jnc		nocarryminus
+	mov		#0x00, R6
+nocarryminus:
 	jmp		save
 
 checktimes:							; multiplication using Peasant Multiplication method

@@ -75,8 +75,6 @@ checktimes:							; multiplication using Peasant Multiplication method
 	cmp.b	#times, 0(R5)
 	jnz		checkclear
 	inc.w	R5
-	cmp.b	#0x00, 0(R5)
-	jz		zero
 	push.w	R7						; preserve R7
 	mov.w	#0x00, R7
 	mov.b	@R5+, R7
@@ -98,10 +96,6 @@ done:
 	mov.w	#0xFF, R8				; no: product was too big
 goodmult:
 	mov.w	R8, R6
-	jmp		save
-zero:
-	inc.w	R5
-	mov.b	#0x00, R6
 	jmp		save
 
 checkclear:

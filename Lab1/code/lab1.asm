@@ -8,6 +8,7 @@
 ;					"Peasant Multiplication" from English Wikipedia
 ;					<http://en.wikipedia.org/wiki/Multiplication_algorithm#Peasant_or_binary_multiplication>
 ;					no cadet help
+;	Functionality:	A, B, and basic functionalities achieved
 ;-------------------------------------------------------------------------------
 	.cdecls C,LIST,"msp430.h"	; BOILERPLATE	Include device header file
  	.text						; BOILERPLATE	Assemble into program memory

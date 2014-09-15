@@ -3,6 +3,9 @@ Simple Calculator Lab
 
 Objectives & Purpose
 ---
+Typing typing typing.
+
+next line.
 
 Preliminary Design
 ---

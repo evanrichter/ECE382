@@ -4,8 +4,8 @@
 ;	MCU:			MSP430G2553
 ;	Assignment:		Lab 2
 ;	Date:			16 September 2014
-;	Documentation:
-;	Functionality:
+;	Documentation:	none
+;	Functionality:	B functionality
 ;-------------------------------------------------------------------------------
 	.cdecls C,LIST,"msp430.h"	; BOILERPLATE	Include device header file
  	.text						; BOILERPLATE	Assemble into program memory
@@ -15,8 +15,10 @@
 								; Build -> Linker -> Advanced -> Symbol Management
 								;    enter main into the Specify program entry point... text box
 
-key:	.byte	0xac
-crypt:	.byte	0xef,0xc3,0xc2,0xcb,0xde,0xcd,0xd8,0xd9,0xc0,0xcd,0xd8,0xc5,0xc3,0xc2,0xdf,0x8d,0x8c,0x8c,0xf5,0xc3,0xd9,0x8c,0xc8,0xc9,0xcf,0xde,0xd5,0xdc,0xd8,0xc9,0xc8,0x8c,0xd8,0xc4,0xc9,0x8c,0xe9,0xef,0xe9,0x9f,0x94,0x9e,0x8c,0xc4,0xc5,0xc8,0xc8,0xc9,0xc2,0x8c,0xc1,0xc9,0xdf,0xdf,0xcd,0xcb,0xc9,0x8c,0xcd,0xc2,0xc8,0x8c,0xcd,0xcf,0xc4,0xc5,0xc9,0xda,0xc9,0xc8,0x8c,0xde,0xc9,0xdd,0xd9,0xc5,0xde,0xc9,0xc8,0x8c,0xca,0xd9,0xc2,0xcf,0xd8,0xc5,0xc3,0xc2,0xcd,0xc0,0xc5,0xd8,0xd5,0x8f
+key:	.byte	0xac,0xdf,0x23
+keyLen:	.byte	0x03
+crypt:	.byte	0xf8,0xb7,0x46,0x8c,0xb2,0x46,0xdf,0xac,0x42,0xcb,0xba,0x03,0xc7,0xba,0x5a,0x8c,0xb3,0x46,0xc2,0xb8,0x57,0xc4,0xff,0x4a,0xdf,0xff,0x12,0x9a,0xff,0x41,0xc5,0xab,0x50,0x82,0xff,0x03,0xe5,0xab,0x03,0xc3,0xb1,0x4f,0xd5,0xff,0x40,0xc3,0xb1,0x57,0xcd,0xb6,0x4d,0xdf,0xff,0x4f,0xc9,0xab,0x57,0xc9,0xad,0x50,0x80,0xff,0x53,0xc9,0xad,0x4a,0xc3,0xbb,0x50,0x80,0xff,0x42,0xc2,0xbb,0x03,0xdf,0xaf,0x42,0xcf,0xba,0x50,0x8f
+msgLen:	.byte	0x52
 ;-------------------------------------------------------------------------------
 ;          		main: sets up registers 12-15 and places a value on the stack for
 ;					  use by decryptMessage
@@ -27,11 +29,13 @@ main:
 	mov.w   #WDTPW|WDTHOLD,&WDTCTL 	; BOILERPLATE	Stop watchdog timer
 
 	;set up registers
-	mov.w	#crypt, R12
-	mov.w	#0x0200, R13
-	mov.b	#0x5e, R14
-	mov.w	#key, R15
-	push.b	#0x01
+	mov.w	#keyLen, R11	; keyLength
+	mov.b	@R11, R11
+	mov.w	#crypt, R12		; msgStart*
+	mov.w	#0x0200, R13	; ramStart*
+	mov.w	#msgLen, R14	; msgLength
+	mov.b	@R14, R14
+	mov.w	#key, R15		; key*
 	call	#decryptMessage
 
 trapcpu:
@@ -47,37 +51,38 @@ trapcpu:
 ;           the message by value.  Uses the decryptCharacter subroutine to decrypt
 ;           each byte of the message.  Stores theresults to the decrypted message
 ;           location.
-;Inputs:	R12-15: msgStart*, ramStart*, msgLength, key*, and keyLength on the stack
+;Inputs:	R11: keyLength
+;			R12: msgStart*
+;			R13: ramStart*
+;			R14: msgLength
+;			R15: key*
 ;Outputs:	decrypted string to RAM
 ;Registers destroyed: none
 ;-------------------------------------------------------------------------------
 
 decryptMessage:
-	push.w	R10
-	mov.b	2(SP), R10
-	push.w	R7
 	push.w	R8
+	push.w	R9
+	push.w	R11
 	push.w	R12
 	push.w	R13
-	push.b	R14
+	push.w	R14
 	push.w	R15
-	push.b	R10
-
 
 checkEndString:
-	cmp.b	#0, R14			; msgLength == 0 ?
+	cmp.w	#0, R14			; msgLength == 0 ?
 	jeq		endString
 	mov.b	@R12+, R8
-	cmp.b	#1, R10			; keyLength == 1 ?
+	cmp.w	#0, R11			; keyLength == 0 ?
 	jne		endKey
-	pop.b	R10				; restore keyLength
-	pop.w	R15				; restore key*
-	push.w	R15
-	push.b	R10
+	mov.w	#keyLen, R11	; restore keyLength
+	mov.b	@R11, R11
+	mov.w	#key, R15		; restore key*
+
 endKey:
-	mov.b	@R15, R9		; put key in register for decrypt
-	dec.b	R10
-	dec.b	R14
+	mov.b	@R15+, R9		; put key in register for decrypt
+	dec.w	R11				; keyLength used as counter
+	dec.w	R14				; msgLength used as counter
 	call	#decryptByte
 	mov.b	R8, 0(R13)
 	inc.w	R13
@@ -85,14 +90,13 @@ endKey:
 endString:
 	;string done
 
-	pop.b	R10
 	pop.w	R15
 	pop.w	R14
 	pop.w	R13
 	pop.w	R12
+	pop.w	R11
+	pop.w	R9
 	pop.w	R8
-	pop.w	R7
-	pop.w	R10
 	ret
 
 ;-------------------------------------------------------------------------------

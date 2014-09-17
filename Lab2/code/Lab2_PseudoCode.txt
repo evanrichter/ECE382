@@ -6,8 +6,8 @@ void main() {
 }
 
 char decryptByte(cryptByte R8, key R9) {
-	xor.b R8, R9
-	return plainByte R9
+	xor.b R9, R8
+	return plainByte R8
 }
 
 void traverseString(msgStart* R11, ramStart* R12, msgLength R13, key* R14, keyLength R15) {

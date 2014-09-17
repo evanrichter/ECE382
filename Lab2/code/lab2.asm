@@ -5,7 +5,8 @@
 ;	Assignment:		Lab 2
 ;	Date:			16 September 2014
 ;	Documentation:	none
-;	Functionality:	B functionality
+;	Functionality:	A Functionality
+;					"Fast. Neat. Average. Friendly. Good. Good."
 ;-------------------------------------------------------------------------------
 	.cdecls C,LIST,"msp430.h"	; BOILERPLATE	Include device header file
  	.text						; BOILERPLATE	Assemble into program memory
@@ -15,10 +16,10 @@
 								; Build -> Linker -> Advanced -> Symbol Management
 								;    enter main into the Specify program entry point... text box
 
-key:	.byte	0xac,0xdf,0x23
-keyLen:	.byte	0x03
-crypt:	.byte	0xf8,0xb7,0x46,0x8c,0xb2,0x46,0xdf,0xac,0x42,0xcb,0xba,0x03,0xc7,0xba,0x5a,0x8c,0xb3,0x46,0xc2,0xb8,0x57,0xc4,0xff,0x4a,0xdf,0xff,0x12,0x9a,0xff,0x41,0xc5,0xab,0x50,0x82,0xff,0x03,0xe5,0xab,0x03,0xc3,0xb1,0x4f,0xd5,0xff,0x40,0xc3,0xb1,0x57,0xcd,0xb6,0x4d,0xdf,0xff,0x4f,0xc9,0xab,0x57,0xc9,0xad,0x50,0x80,0xff,0x53,0xc9,0xad,0x4a,0xc3,0xbb,0x50,0x80,0xff,0x42,0xc2,0xbb,0x03,0xdf,0xaf,0x42,0xcf,0xba,0x50,0x8f
-msgLen:	.byte	0x52
+key:	.byte	0x73, 0xBe
+keyLen:	.byte	0x02
+crypt:	.byte	0x35,0xdf,0x00,0xca,0x5d,0x9e,0x3d,0xdb,0x12,0xca,0x5d,0x9e,0x32,0xc8,0x16,0xcc,0x12,0xd9,0x16,0x90,0x53,0xf8,0x01,0xd7,0x16,0xd0,0x17,0xd2,0x0a,0x90,0x53,0xf9,0x1c,0xd1,0x17,0x90,0x53,0xf9,0x1c,0xd1,0x17,0x90
+msgLen:	.byte	0x2a
 ;-------------------------------------------------------------------------------
 ;          		main: sets up registers 12-15 and places a value on the stack for
 ;					  use by decryptMessage
@@ -35,8 +36,51 @@ main:
 	mov.w	#0x0200, R13	; ramStart*
 	mov.w	#msgLen, R14	; msgLength
 	mov.b	@R14, R14
-	mov.w	#key, R15		; key*
+
+	mov.w	#0x0260, R15	; will store keys in RAM temporarily
+	mov.w	#0x0000, 0(R15)	; start with key 0x0000
+
+	mov.w	#0x03, R9		; R9 holds most number of spaces found in any plain text
+	mov.w	#0x00, R10		; R10 holds number of spaces found in the plain text
+							; the ' ' or 0x20 character is most common in an English string
+
+; will iterate over many keys, saving keys that had valid chars, and more than 3 spaces
+	jmp		countSpaces
+
+rankKey:
+	cmp		#0x04, R10	; R10 >= 4?
+	jl		foundGood	; if yes, a key that produced many spaces was found
+	jmp		nextKey		; good key not found, try next key
+
+foundGood:
+	mov.b	0(R15), 2(R15)		; store any better keys after this one in RAM
+	mov.b	1(R15), 3(R15)
+	incd.w	R15
+	jmp		nextKey
+
+nextKey:
+	inc.b	1(R15)
+	jnc		nooverflow
+	inc.b	0(R15)
+nooverflow:
+	jc		testedAll			; only called if larger byte just carried over
+								; keys from 0x0000 to 0xFFFF have been tested!
+	jmp		countSpaces
+
+countSpaces:
+	mov.w	#0x00, R10			; clear ' ' count
 	call	#decryptMessage
+	cmp.w	#0xFFFF, R10		; did key return bad chars?
+	jne		foundGood
+	jmp		nextKey
+
+
+testedAll:
+	; after running the code, I had a list of possible keys with only one element
+	; 0x73be
+	mov.w	#key, R15		; substitute the best key found back in
+	call	#decryptMessage
+	jmp		trapcpu
 
 trapcpu:
 	jmp		trapcpu
@@ -63,11 +107,11 @@ trapcpu:
 decryptMessage:
 	push.w	R8
 	push.w	R9
-	push.w	R11
 	push.w	R12
 	push.w	R13
 	push.w	R14
 	push.w	R15
+	push.w	R11
 
 checkEndString:
 	cmp.w	#0, R14			; msgLength == 0 ?
@@ -75,9 +119,10 @@ checkEndString:
 	mov.b	@R12+, R8
 	cmp.w	#0, R11			; keyLength == 0 ?
 	jne		endKey
-	mov.w	#keyLen, R11	; restore keyLength
-	mov.b	@R11, R11
-	mov.w	#key, R15		; restore key*
+	pop.w	R11				; restore keyLength
+	pop.w	R15				; restore key*
+	push.w	R15
+	push.w	R11
 
 endKey:
 	mov.b	@R15+, R9		; put key in register for decrypt
@@ -86,15 +131,34 @@ endKey:
 	call	#decryptByte
 	mov.b	R8, 0(R13)
 	inc.w	R13
+	cmp.b	#0x20, R8		; check if ' '
+	jeq		goodChar
+	cmp.b	#0x2e, R8		; check if '.'
+	jeq		goodChar
+	cmp.b	#0x41, R8		; R8 < 0x41 ?
+	jl		badChar
+	cmp.b	#0x5b, R8		; R8 >= 0x5b ?
+	jge		checkMid		; if yes, check if between ASCII upper and lower case letters
+	jmp		goodChar
+checkMid:
+	cmp.b	#0x61, R8		; R8 < 0x61 ?
+	jl		badChar
+	cmp.b	#0x7b, R8		; R8 >= 0x7b ?
+	jge		badChar
+	jmp		goodChar
+goodChar:
 	jmp		checkEndString
+badChar:
+	mov.w	#0xFFFF, R10	; main will check if R10 = xFFFF
+	jmp		endString
 endString:
 	;string done
 
+	pop.w	R11
 	pop.w	R15
 	pop.w	R14
 	pop.w	R13
 	pop.w	R12
-	pop.w	R11
 	pop.w	R9
 	pop.w	R8
 	ret

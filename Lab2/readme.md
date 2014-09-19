@@ -59,7 +59,7 @@ Software Flow-Chart / Algorithms
 In this section I will discuss the general purposes and utility of the subroutines that worked to solve the problem.
 
 ### Program Overview
-The big picture of my program is two subroutines. One takes a byte of cipher text and a key, and returns a plain text byte; the other takes parameters to direct the decryption of the entire message.
+The big picture of my program is two subroutines. One takes a byte of cipher text and a key, and returns a plain text byte; the other takes parameters to direct the decryption of the entire message. The only thing `main` needs to do is set the parameters for `decryptMessage` and then call `decryptMessage`.
 
 ### A look at `decryptByte`
 Register | Parameters | Output
@@ -89,6 +89,8 @@ decryptMessage:
 	push.w	R11
 ```
 
+At the end of the subroutine, every register that was `push`ed on the stack is then `pop`ped off the stack in reverse order. This restores the registers to their state before this subroutine was called.
+
 #### a loop within a loop
 Each byte in the crypt text needs to be touched. One loop in `decryptMessage` handles this simply by using the `msgLength` variable as a counter approaching zero. `msgLength` is decremented every time after the byte is decrypted.
 
@@ -96,7 +98,6 @@ Each byte in the crypt text needs to be touched. One loop in `decryptMessage` ha
 checkEndString:
 	cmp.w	#0, R14
 	jeq		endString
-	mov.b	@R12+, R8
 ```
 
 Similarly, each byte needs to have a key before decryption can happen. A loop within `checkEndString` handles this by using `keyLength` as a decremented counter. The keys we are dealing with are all smaller in length than the message. This means the key has to loop over itself multiple times. The most recent items on the stack are conveniently `keyLength` and `key*` specifically for this purpose. The following code snippet just restores the counter used to iterate over the key, and the original key pointer.
@@ -111,18 +112,84 @@ Similarly, each byte needs to have a key before decryption can happen. A loop wi
 ```
 
 #### decrypting a byte
+This is the simplest part of the subroutine. The following needs to happen:
 
+1. load the crypt byte and key
+2. decrement the length counters
+3. call `decryptByte`
+4. store result in memory
+
+All of that is done in this code, before moving to the next byte.
+
+```
+	mov.b	@R12+, R8
+	mov.b	@R15+, R9
+	dec.w	R11
+	dec.w	R14
+	call	#decryptByte
+	mov.b	R8, 0(R13)
+	inc.w	R13
+	jmp	endString
+```
+
+### A Functionality
+The code dicussed above is functional for any XOR encryption or decryption problem with variable key length. What is discussed below only pertains to finding the plain text message from a crypt text with unknown key.
+
+Known | Unknown
+:---: | :---:
+message length | key
+contains: ' ', '.', a-z, or A-Z | 
+ASCII encoded | 
+16-bit key length | 
+
+I modified `main` to iterate over every key from `x0000` to `xffff` and return a list of valid keys.
+
+Register | Purpose
+------- | ------
+R15 | pointer to RAM where valid keys are stored
+R10 | validity of key `x0000` = valid, `xffff` = not valid
+
+This required modifying `decryptMessage` to return an error if an invalid character was found. After decrypting the byte, the result is checked for the ASCII characters: space, period, and the set of uppercase and lowercase letters.
+
+```
+	cmp.b	#0x20, R8
+	jeq		goodChar
+	cmp.b	#0x2e, R8
+	jeq		goodChar
+	cmp.b	#0x41, R8
+	jl		badChar
+	cmp.b	#0x5b, R8
+	jge		checkMid
+	jmp		goodChar
+checkMid:
+	cmp.b	#0x61, R8
+	jl		badChar
+	cmp.b	#0x7b, R8
+	jge		badChar
+	jmp		goodChar
+```
+If the result was a valid character, the decryption proceeds to the next byte. If not, the process stops and `R10` is set to the error message `xffff`.
+
+```
+goodChar:
+	jmp		checkEndString
+badChar:
+	mov.w	#0xFFFF, R10
+	jmp		endString
+```
+
+This gave me only one possible key: `x73be` which produced the text
+> Fast. Neat. Average. Friendly. Good. Good.
 
 Debugging & Testing
 ---
-### Method
-When debugging my program...
+When finding the plain text of the A functionality string, I thought a character frequency test on the space character, ASCII `0x20`, would be a good place to start. This didn't work out, however, because in the message itself, the frequency of the period character was higher. I changed my approach to the one above after trying the possible keys that the first algorithm gave me.
 
 Conclusion & Lessons Learned
 ---
-
+In this lab I learned that often solving only a *subset* of a problem will speed up the design and implementation of the whole solution.
 
 
 Documentation
 ---
-none
+I used Paul Schou's online binary translator to check my results. [xlate](http://paulschou.com/tools/xlate/)

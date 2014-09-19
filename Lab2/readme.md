@@ -192,4 +192,6 @@ In this lab I learned that often solving only a *subset* of a problem will speed
 
 Documentation
 ---
+No cadet help.
+
 I used Paul Schou's online binary translator to check my results. [xlate](http://paulschou.com/tools/xlate/)

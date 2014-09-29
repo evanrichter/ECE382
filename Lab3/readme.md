@@ -46,12 +46,12 @@ The following initializes the SPI subsystem of the MSP430.  For each of the bits
 
 | ID | Bit | Function as set in the code |
 |:-:|:-:|:-:|
-| UCCKPH | | |
-| UCMSB | | |
-| UCMST | | |
-| UCSYNCH| | |
-| UCSSEL_2|  | |
-| UCSWRST| | |
+| UCCKPH |7 |Capture data on first UCLK edge |
+| UCMSB |5 |Identifies first bit as most significant in shift register |
+| UCMST |3 |Master mode |
+| UCSYNC|0 |Asynchronous mode |
+| UCSSEL_2| 7,6 | Use SMCLK as USCI clock |
+| UCSWRST| 0| Disabled. USCI reset released for operation |
 
 ### Communicate to the Nokia1202 display
 The following code communicates one byte to the Nokia 1202 display using its 9-bit protocol.  Use this code to draw a timing diagram of the expected behavior of LCD1202_CS_PIN, LCD1202_SCLK_PIN, LCD1202_MOSI_PINs from the begining of this subroutine to the end.  Make sure that you clearly show the relationship of the edges in the clk and data waveforms.

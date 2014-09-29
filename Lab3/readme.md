@@ -14,10 +14,10 @@ Look at the schematic for the Nokia1202 LCD BoosterPack. Complete the following 
 |  MOSI|   15    |   out   | 1     | 0      |   1    |   
 | SCLK |  7    |  out | 1    |  0    |  1    |   
 |  VCC |   1    |   pwr   |   x   |    x   |    x   |  
-|   S1 |       |      |      |       |       | 
-|   S2 |       |      |      |       |       | 
-|   S3 |       |      |      |       |       | 
-|   S4 |       |      |      |       |       | 
+|   S1 |   9    |   in   |   0   |   1    |    1   | 
+|   S2 |   10    |   in   |   0   |  1     |   1    | 
+|   S3 |    11   |   in   |   0   |   1    |   1    | 
+|   S4 |   12    |   in   |  0    |  1     |  1     | 
 
 
 ### Configure the MSP430
@@ -31,10 +31,10 @@ mov.b	#LCD1202_RESET_PIN, & D
 ```
 | Mystery Label | Register|
 |:-: |:-: |
-| A|  |
-| B |  |
-| C |  |
-| D |  |
+| A| P1DIR |
+| B | P1OUT |
+| C | P2DIR |
+| D | P2OUT |
 
 
 The following initializes the SPI subsystem of the MSP430.  For each of the bits listed in the table below, identify how the code-snippet configures that pin and what function is realized by that setting.  For example, setting the UCMSB bit of the UCB0CTL0 register forces the SPI subsystem to output the bits starting from the LSB.  Also, list the bit position that each occupies in its associated register.

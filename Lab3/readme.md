@@ -139,7 +139,7 @@ delayNokiaResetHigh:
 	; First write seems to come out a bit garbled - not sure cause
 	; but it can't hurt to write a reset command twice
 	mov	#NOKIA_CMD, R12
-	mov	#STE2007_RESET, R13					; DECODE HERE
+	mov	#STE2007_RESET, R13			; #0xE2 -> R13
 	call	#writeNokiaByte
 
 
@@ -148,19 +148,19 @@ delayNokiaResetHigh:
 	call	#writeNokiaByte
 
 	mov	#NOKIA_CMD, R12
-	mov	#STE2007_DISPLAYALLPOINTSOFF, R13			; DECODE HERE
+	mov	#STE2007_DISPLAYALLPOINTSOFF, R13		; #0xA4 -> R13
 	call	#writeNokiaByte
 
 	mov	#NOKIA_CMD, R12
-	mov	#STE2007_POWERCONTROL | STE2007_POWERCTRL_ALL_ON, R13	; DECODE HERE
+	mov	#STE2007_POWERCONTROL | STE2007_POWERCTRL_ALL_ON, R13	; #0x2F -> R13
 	call	#writeNokiaByte
 
 	mov	#NOKIA_CMD, R12
-	mov	#STE2007_DISPLAYNORMAL, R13				; DECODE HERE
+	mov	#STE2007_DISPLAYNORMAL, R13				; #0xA6 -> R13
 	call	#writeNokiaByte
 
 	mov	#NOKIA_CMD, R12
-	mov	#STE2007_DISPLAYON, R13					; DECODE HERE
+	mov	#STE2007_DISPLAYON, R13					; #0xAF -> R13
 	call	#writeNokiaByte
 
 	pop	R13
@@ -173,12 +173,12 @@ Complete the table below.  To answer this question you will have to use some com
 
 | Symbolic Constant | Hex | Function |
 | :-: | :-: | :-: |
-|#STE2007_RESET| | |
-|#STE2007_DISPLAYALLPOINTSOFF| | |
-|#STE2007_POWERCONTROL| | | 
-|#STE2007_POWERCTRL_ALL_ON | | |
-|#STE2007_DISPLAYNORMAL | | |
-|#STE2007_DISPLAYON | | |
+|#STE2007_RESET| 0xE2 | Reset the display to all pixels off/on |
+|#STE2007_DISPLAYALLPOINTSOFF| 0xA4 | Turns all pixels off |
+|#STE2007_POWERCONTROL| 0x28 | Needs to be logically 'OR'ed with 3 low bits; tells the display to change status of its power supply | 
+|#STE2007_POWERCTRL_ALL_ON | 0x7 | Booster, voltage regulator, and voltage follower set to ON |
+|#STE2007_DISPLAYNORMAL | 0xA6 | Tells the display to display pixels set as '1' to ON, and '0' to OFF, without changing the DDRAM |
+|#STE2007_DISPLAYON | 0xAF | Turns the display on |
 
 (This marks the end of the Mega Prelab.)
 ---------------------------------------------------------------

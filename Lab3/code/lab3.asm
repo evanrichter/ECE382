@@ -32,16 +32,6 @@ STE2007_DISPLAYON:				.equ	0xAF
 
 ;-------------------------------------------------------------------------------
 ;           						main
-;	R10		row value of cursor
-;	R11		value of @R12
-;
-;	When calling writeNokiaByte
-;	R12		1-bit	Parameter to writeNokiaByte specifying command or data
-;	R13		8-bit	data or command
-;
-;	when calling setAddress
-;	R12		row address
-;	R13		column address
 ;-------------------------------------------------------------------------------
 main:
 
@@ -53,58 +43,54 @@ main:
 	call	#initNokia					; initialize the Nokia 1206
 	call	#clearDisplay				; clear the display and get ready....
 
-	mov.w	#4, R10						; used to move the cursor around
-	mov.w	#0x2C, R11
-	mov.w	#0xA6, R9					; normal mode command
-	mov.w	#0x34, R8
-	mov.w	#0xFF, R7
+	mov		#0, R12						; set row
+	mov		#0, R13					; and column of the square
 
-while1:
-	bit.b	#8, &P2IN					; bit 3 of P1IN set?
-	jnz 	while1						; Yes, branch back and wait
-
-while0:
-	bit.b	#8, &P2IN					; bit 3 of P1IN clear?
-	jz		while0						; Yes, branch back and wait
-
-write:
-	mov		R10, R12					; set row
-	mov		R11, R13					; and column of the next beam
-	call	#setAddress					; we draw
-
-	mov		#NOKIA_DATA, R12			; draw
-	mov		R7, R13						; a full bar
-	call	#writeNokiaByte
-
-	inc		R11							; increment the column
-	mov		R10, R12					; set the row
-	mov		R11, R13					; and column of the next beam
-	call	#setAddress
-	cmp.w	R8, R11					; if R11 < 0x30,
-	jl		write						; wait for another press
-
-invert:
-while1a:
-	bit.b	#8, &P2IN					; bit 3 of P1IN set?
-	jnz 	while1a						; Yes, branch back and wait
-
-while0b:
-	bit.b	#8, &P2IN					; bit 3 of P1IN clear?
-	jz		while0b						; Yes, branch back and wait
-
-	xor.b	#1, R9
-	mov.w	#NOKIA_CMD, R12
-	mov.w	R9, R13
-	call	#writeNokiaByte
-
-	add.b	#8, R8
-	xor.b	#0xFF, R7
-
-	jmp		while1
+while:
+	cmp		#7, R12
+	jeq		trap
+	call	#drawBox
+	inc		R12
+	jmp		while
 
 trap:
 	jmp		trap
 
+;-------------------------------------------------------------------------------
+;	Name:		drawBox, 8x8
+;	Inputs:		x,y coordinates of top left pixel
+;	Outputs:	a square on the Nokia 1202 screen
+;	Purpose:	Draw a square
+;	Registers:	R12 row (0:8)
+;				R13 column (0:96)
+;-------------------------------------------------------------------------------
+drawBox:
+	push	R5
+	push	R12
+	push	R13
+
+	mov		#0, R5
+
+foo:
+	cmp		#8, R5
+	jeq		done
+	call	#setAddress
+	mov		#NOKIA_DATA, R12
+	mov		#0xFF, R13
+	call	#writeNokiaByte
+	pop		R13
+	pop		R12
+	push	R12
+	push	R13
+	inc		R5
+	add		R5, R13
+	jmp		foo
+
+done:
+	pop		R13
+	pop		R12
+	pop		R5
+	ret
 ;-------------------------------------------------------------------------------
 ;	Name:		initNokia		68(rows)x92(columns)
 ;	Inputs:		none

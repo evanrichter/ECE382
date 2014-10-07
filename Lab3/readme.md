@@ -210,7 +210,7 @@ Using the delay you just measured and the number of counts, calculate the amount
 ###Writing modes
 The native write operation to the Nokia 1202 will overwrite any information that is was on the display with new information.  However, that may not be the best course of action in your application.  The new bits being added to the image may be merged using the AND, OR, XOR operators.  To do this treat a black pixel as a logic 1 and a white pixel as a logic 0.  The pixel values from the same locations are combined using a logical operator and placed at the corresponding location in the destination imaged.
 Import the following image into a paint program and show the result of the operation between the two bits maps combined using the logic operator specified.
-![xor picture](bitblock.bmp)
+![](./images/writingmodes.png "writing modes picture")
 ## Functionality
 Required functionality: Create a block on the LCD that is 8x8 pixels.  The location of the block must be passed into the subroutine via r12 and r13.
 A functionality: Move the 8-pixel block one block in the direction of the pressed button (up, down, left, right).

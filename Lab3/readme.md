@@ -204,18 +204,18 @@ This shows the output of the `#writeNokiaByte` on line 66. It draws a line with 
 ![Logic analyzer output 1 ](./images/richtercapture.png)
 
 This shows the output of the `#writeNokiaByte` on line 276. This sets the page address to 0, the upper-most "row" of 8 pixels.
-![Logic analyzer output 1 ](./images/richtercapture2.png)
+![Logic analyzer output 2 ](./images/richtercapture2.png)
 
 This shows the output of the `#writeNokiaByte` on line 288. This sets the most significant part of the column address to `011`.
-![Logic analyzer output 1 ](./images/richtercapture3.png)
+![Logic analyzer output 3 ](./images/richtercapture3.png)
 
 This shows the output of the `#writeNokiaByte` on line 294. This sets the least significant part of the column address to `1000`. This makes the finished column address 56.
-![Logic analyzer output 1 ](./images/richtercapture4.png)
+![Logic analyzer output 4 ](./images/richtercapture4.png)
 
 Next, setup the Logic Analyzer to capture the RESET signal on a falling edge. Measure the duration that the RESET line is held low in the initNokia subroutine. Hint, the code to hold the reset line low can be found on lines 93-100. 
 
-![Logic analyzer output 1 ](./images/richtercapture5.png)
-This delay shows the reset pin set low while the MSP430 counts from `0xFFFF` to 0.
+![Logic analyzer output 5 ](./images/richtercapture5.png)
+This delay shows the reset pin set low while the MSP430 counts from `0xFFFF` to 0. It took 20.92ms for it to finish that, meaning a 319ns delay per count.
 
 ###Writing modes
 The native write operation to the Nokia 1202 will overwrite any information that is was on the display with new information.  However, that may not be the best course of action in your application.  The new bits being added to the image may be merged using the AND, OR, XOR operators.  To do this treat a black pixel as a logic 1 and a white pixel as a logic 0.  The pixel values from the same locations are combined using a logical operator and placed at the corresponding location in the destination imaged.

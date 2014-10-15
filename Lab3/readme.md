@@ -195,17 +195,27 @@ Configure the logic analyzer to capture the waveform generated when the SW3 butt
 
 |Line|Command/Data|8-bit packet|
 |:-:|:-:|:-:|
-||||
-||||
-||||
-|||||
-Hint: in order to probe the signals while the LCD is connected to the LaunchPad, you will need to use the LaunchPad header pins with the probe hook grippers. Be careful when attaching and detaching the grippers to the pins, as they may easily bend and then no longer serve you well. Also, don't forget the ground pin!<br>
-![Logic analyzer connection](left.jpg)<br>
-You will get a waveform similar to that shown below. Note that the command/data bit is significantly far away from the 8 data bits. <br>
-![Logic analyzer output](LA_datastream.jpg)<br>
+|66|Data|11100111|
+|276|Command|10110000|
+|288|Command|00010011|
+|294|Command|00001000|
+
+This shows the output of the `#writeNokiaByte` on line 66. It draws a line with a two pixel break in the middle.
+![Logic analyzer output 1 ](./images/richtercapture.png)
+
+This shows the output of the `#writeNokiaByte` on line 276. This sets the page address to 0, the upper-most "row" of 8 pixels.
+![Logic analyzer output 1 ](./images/richtercapture2.png)
+
+This shows the output of the `#writeNokiaByte` on line 288. This sets the most significant part of the column address to `011`.
+![Logic analyzer output 1 ](./images/richtercapture3.png)
+
+This shows the output of the `#writeNokiaByte` on line 294. This sets the least significant part of the column address to `1000`. This makes the finished column address 56.
+![Logic analyzer output 1 ](./images/richtercapture4.png)
+
 Next, setup the Logic Analyzer to capture the RESET signal on a falling edge. Measure the duration that the RESET line is held low in the initNokia subroutine. Hint, the code to hold the reset line low can be found on lines 93-100. 
-How many counts does the firmware loop count down from? 
-Using the delay you just measured and the number of counts, calculate the amount of time each iteration of the delay loop consumes.
+
+![Logic analyzer output 1 ](./images/richtercapture5.png)
+This delay shows the reset pin set low while the MSP430 counts from `0xFFFF` to 0.
 
 ###Writing modes
 The native write operation to the Nokia 1202 will overwrite any information that is was on the display with new information.  However, that may not be the best course of action in your application.  The new bits being added to the image may be merged using the AND, OR, XOR operators.  To do this treat a black pixel as a logic 1 and a white pixel as a logic 0.  The pixel values from the same locations are combined using a logical operator and placed at the corresponding location in the destination imaged.

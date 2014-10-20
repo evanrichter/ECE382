@@ -1,5 +1,3 @@
-title = 'Lab 4 - C - "Etch-a-Sketch and Pong"'
-
 # Lab 4 - C - "Etch-a-Sketch and Pong"
 
 ## Objectives

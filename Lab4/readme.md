@@ -79,7 +79,7 @@ Because space is limited on microcontrollers, it is a common practice to use var
 Start by consulting the [Typedef Wikipedia page](http://en.wikipedia.org/wiki/Typedef). Next, fill in the following chart with the appropriate C code definitions.
 
 | Type | Meaning | C typedef declaration |
-| :---: | :---: | :---: |
+| :---: | :---: | :--- |
 | int8 | unsigned 8-bit value | typedef unsigned char int8; |
 | sint8 | signed 8-bit value |  typedef signed char sint8; |
 | int16 | unsigned 16-bit value | typedef unsigned short int16;|

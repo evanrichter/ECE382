@@ -61,14 +61,14 @@ Go to page 76 of the C Compiler User's Guide to complete the following table. Fo
 
 | Size | Signed/Unsigned | Type | Min value | Max value |
 | :---: | :---: | :---: | :---: | :---: |
-| 8-bit | unsigned | | | |
-| 8-bit | signed | | | |
-| 16-bit | unsigned | unsigned short | | |
-| 16-bit | signed | | | |
-| 32-bit | unsigned | | | |
-| 32-bit | signed | | -2,147,483,648 | |
-| 64-bit | unsigned | | | |
-| 64-bit | signed | | | | |
+| 8-bit | unsigned | unsigned char | 0|255 |
+| 8-bit | signed | signed char|-128 |127 |
+| 16-bit | unsigned | unsigned short | 0|65 535 |
+| 16-bit | signed | int| -32 768|32 767 |
+| 32-bit | unsigned | unsigned long|0 | 4 294 967 295|
+| 32-bit | signed | | -2 147 483 648 | 2 147 483 647|
+| 64-bit | unsigned | unsigned long long |0 |18 446 744 073 709 551 615 |
+| 64-bit | signed |signed long long | -9 223 372 036 854 775 808| 9 223 372 036 854 775 807|
 
 When writing embedded C code, it is always a good idea to separate your code from the architecture as much as possible because to make the code easier to change. This is why it is better to:
 - use the peripheral register names in your code (e.g. P2IN) rather than their address (e.g. 0x28).
@@ -80,8 +80,8 @@ Start by consulting the [Typedef Wikipedia page](http://en.wikipedia.org/wiki/Ty
 
 | Type | Meaning | C typedef declaration |
 | :---: | :---: | :---: |
-| int8 | unsigned 8-bit value |  |
-| sint8 | signed 8-bit value |  |
+| int8 | unsigned 8-bit value | typedef unsigned char int8; |
+| sint8 | signed 8-bit value |  typedef |
 | int16 | unsigned 16-bit value | typedef unsigned short int16;|
 | sint16 | signed 16-bit value |  |
 | int32 | unsigned 32-bit value |  |

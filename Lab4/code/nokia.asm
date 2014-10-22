@@ -1,11 +1,12 @@
 ;-------------------------------------------------------------------------------
-;	Chris Coulston
-;	Fall 2014
-;	MSP430G2553
-;	Put some pixels on the Nokia 1202 Diaplsy
+;	Name:		Dr. Chris Coulston
+;	Term:		Fall 2014
+;	MCU:		MSP430G2553
+;	Lecture:	22
+;	Date:		16 October 2014
+;	Note:		Demonstration of how to combine C and assembly lanugage.
 ;-------------------------------------------------------------------------------
 	.cdecls C,LIST,"msp430.h"		; BOILERPLATE	Include device header file
-
 
 LCD1202_SCLK_PIN:				.equ	20h		; P1.5
 LCD1202_MOSI_PIN: 				.equ	80h		; P1.7
@@ -29,6 +30,7 @@ STE2007_DISPLAYON:				.equ	0xAF
 	.global initNokia
 	.global clearDisplay
 	.global drawBlock
+	.global drawCircle
 
 
 ;-------------------------------------------------------------------------------
@@ -365,5 +367,44 @@ loopdB:
 	pop		R13
 	pop		R12
 	pop		R5
+
+	ret							; return whence you came
+
+;-------------------------------------------------------------------------------
+;	Name:		drawCircle
+;	Inputs:		R12 row to draw block
+;				R13	column to draw block
+;	Outputs:	none
+;	Purpose:	extra credit
+;-------------------------------------------------------------------------------
+drawCircle:
+	push	R12
+	push	R13
+
+	rla.w	R13					; the column address needs multiplied
+	rla.w	R13					; by 8in order to convert it into a
+	rla.w	R13					; pixel address.
+	call	#setAddress			; move cursor to upper left corner of block
+
+	mov		#1, R12
+	mov		#0x08, R13
+	call	#writeNokiaByte
+	mov		#0x3C, R13
+	call	#writeNokiaByte
+	mov		#0x7E, R13
+	call	#writeNokiaByte
+	mov		#0xFE, R13
+	call	#writeNokiaByte
+	mov		#0x7F, R13
+	call	#writeNokiaByte
+	mov		#0x7E, R13
+	call	#writeNokiaByte
+	mov		#0x3c, R13
+	call	#writeNokiaByte
+	mov		#0x10, R13
+	call	#writeNokiaByte
+
+	pop		R13
+	pop		R12
 
 	ret							; return whence you came

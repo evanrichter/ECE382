@@ -1,37 +1,70 @@
 #include <msp430g2553.h>
+#include "lab4.h"
 
 extern void init();
 extern void initNokia();
 extern void clearDisplay();
 extern void drawBlock(unsigned char row, unsigned char col);
 
-#define		TRUE			1
-#define		FALSE			0
-#define		UP_BUTTON		(P2IN & BIT5)
-#define		DOWN_BUTTON		(P2IN & BIT4)
-#define		AUX_BUTTON		(P2IN & BIT3)
-#define		LEFT_BUTTON		(P2IN & BIT2)
-#define		RIGHT_BUTTON	(P2IN & BIT1)
-
+/*
+ * Returns a pair of values, the first being position, the second velocity
+ */
+SignedInt8Pair move1d(sint8 position, sint8 velocity, sint8 upperbound) {
+	SignedInt8Pair c;
+	if (position + velocity <= upperbound) {
+		if (position + velocity >= 0) {
+			c.x = position + velocity;
+			c.y = velocity;
+		} else {
+			c.x = 0;
+			c.y = -velocity;
+		}
+	} else {
+		c.x = upperbound;
+		c.y = -velocity;
+	}
+	return c;
+}
 
 void main() {
 
-	unsigned char	x, y, button_press;
+	unsigned char	button_press;
+	unsigned short cnt;
+	SignedInt8Pair position, velocity, temp;
 
 	// === Initialize system ================================================
 	IFG1=0; /* clear interrupt flag1 */
 	WDTCTL=WDTPW+WDTHOLD; /* stop WD */
 	button_press = FALSE;
 
-
 	init();
 	initNokia();
 	clearDisplay();
-	x=4;		y=4;
-	drawBlock(y,x);
+
+	position.x=X_INIT;
+	position.y=Y_INIT;
+	velocity.x=DX_INIT;
+	velocity.y=DY_INIT;
+	drawBlock(position.y,position.x);
+
 
 	while(1) {
+		clearDisplay();
+		drawBlock(position.y,position.x);
+		//figure out the new position and velocity of x direction
+		temp = move1d(position.x, velocity.x, X_UPPER_BOUND);
+		position.x = temp.x;
+		velocity.x = temp.y;
 
+		////figure out the new position and velocity of y direction
+		temp = move1d(position.y, velocity.y, Y_UPPER_BOUND);
+		position.y = temp.x;
+		velocity.y = temp.y;
+
+		cnt=0;
+		for(;cnt<65000;cnt++){
+		}
+/*
 			if (UP_BUTTON == 0) {
 				while(UP_BUTTON == 0);
 				if (y>=1) y=y-1;
@@ -55,5 +88,9 @@ void main() {
 				clearDisplay();
 				drawBlock(y,x);
 			}
+*/
 		}
 }
+
+
+

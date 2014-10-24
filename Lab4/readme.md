@@ -4,12 +4,10 @@
 
 You've spent the last 5 lessons transitioning from programming in assembly language to C.  In this lab, you'll use C to create an etch-a-sketch-type program that utilizes some subroutines from Lab 3.  You'll be expected to write clean, maintainable, modular code that is committed regularly to Git.
 
-## Details
-
 ### Required Functionality
 
 
-Modify your assembly drawBlock function to take in 3 values: an x coordinate, a y coordinate, and a color.  
+Modify your assembly drawBlock function to take in 3 values: an x coordinate, a y coordinate, and a color.
 
 Create an etch-a-sketch program using the directional buttons of the LCD booster pack to control the position of the paint brush. The paint brush will draw 8x8 blocks of pixels. The user will change the position of the paint brush by pressing the directional buttons. Each button press will move the cursor 8 pixels in the direction pressed (see table below). Pressing the auxiliary button (SW3) will toggle the mode of the paint brush between filling squares and clearing squares.
 
@@ -21,17 +19,14 @@ Create an etch-a-sketch program using the directional buttons of the LCD booster
 | SW1/Right | Move the cursor right 1 block |
 | SW3/Aux | Toggle the color of the paint brush |
 
-This program must be written in C and call many of the subroutines written as part of lab 3, including drawBlock and changePosition. 
-
-Mind your coding standards!  Commit regularly with descriptive commit messages!
 
 ### B Functionality
 
-Create a bouncing block!  This block should move across the screen with no more than 8 pixels per jump.  It should bounce off the walls appropriately, similar to assignment 6.  An adequate delay movement should be added between each block movement.  Your starting position and starting x and y velocities should be initialized in your header, or should be randomly generated. 
+Create a bouncing block!  This block should move across the screen with no more than 8 pixels per jump.  It should bounce off the walls appropriately, similar to assignment 6.  An adequate delay movement should be added between each block movement.  Your starting position and starting x and y velocities should be initialized in your header, or should be randomly generated.
 
 ### A Functionality
 
-Create Pong on your display! Create a single paddle that will move up and down on one side of the display, controlled by the up and down buttons.  The block will bounce off the paddle like it bounces off the wall.  When the block misses hitting the paddle, the game will end.  
+Create Pong on your display! Create a single paddle that will move up and down on one side of the display, controlled by the up and down buttons.  The block will bounce off the paddle like it bounces off the wall.  When the block misses hitting the paddle, the game will end.
 
 ### Bonus Functionality
 
@@ -70,9 +65,9 @@ Go to page 76 of the C Compiler User's Guide to complete the following table. Fo
 
 When writing embedded C code, it is always a good idea to separate your code from the architecture as much as possible because to make the code easier to change. This is why it is better to:
 - use the peripheral register names in your code (e.g. P2IN) rather than their address (e.g. 0x28).
-- use peripheral register field names in your code 
+- use peripheral register field names in your code
 
-Because space is limited on microcontrollers, it is a common practice to use variables with a range suitable for the task at hand. Unfortunately, there is no standard among C compilers between the basic data types like char, short, long and the number of bits in the underlying data representation. Furthermore, when writing and reading code, it is not readily apparent how many bits are in a short or long variable. Consequently, we will write our programs using typed definitions that provide an obvious connection between the data type and the number of bits in the representation. 
+Because space is limited on microcontrollers, it is a common practice to use variables with a range suitable for the task at hand. Unfortunately, there is no standard among C compilers between the basic data types like char, short, long and the number of bits in the underlying data representation. Furthermore, when writing and reading code, it is not readily apparent how many bits are in a short or long variable. Consequently, we will write our programs using typed definitions that provide an obvious connection between the data type and the number of bits in the representation.
 
 Start by consulting the [Typedef Wikipedia page](http://en.wikipedia.org/wiki/Typedef). Next, fill in the following chart with the appropriate C code definitions.
 
@@ -93,15 +88,15 @@ Make a project around simpleLab4.c. While the functioning of the program is not 
 
 | Iteration | a | b | c | d | e |
 | :---: | :---: | :---: | :---: | :---:| :---: |
-| 1st | 1 | 2 | 3 | 4 | 2 | 
-| 2nd | 10|9  |8  |7  |8  | 
-| 3rd | 16|15 |14 |13 |14 | 
-| 4th |22 |21 |20 |19 |20 | 
+| 1st | 1 | 2 | 3 | 4 | 2 |
+| 2nd | 10|9  |8  |7  |8  |
+| 3rd | 16|15 |14 |13 |14 |
+| 4th |22 |21 |20 |19 |20 |
 | 5th | 28|27 |26 |25 |26 |
 
 Now examine the assembly code generated by the compiler by selecting the View -> Disassembly menu item. You should see the disassembly window as a selectable tab in the subwindow where your registers are displayed. To fill in the following table with the appropriate values, you have a few tasks:
-- Firstly, find the code for the function `func` and write down the starting and ending address in the table below. 
-- Next, identify which registers are used to pass the input parameters from main to the function. Write their identities below. If it is not clear which register holds which input parameter, test it out!  Go ahead and change the code, so that `func` only has one input parameter, recompile the code, and then examine the assembly. 
+- Firstly, find the code for the function `func` and write down the starting and ending address in the table below.
+- Next, identify which registers are used to pass the input parameters from main to the function. Write their identities below. If it is not clear which register holds which input parameter, test it out!  Go ahead and change the code, so that `func` only has one input parameter, recompile the code, and then examine the assembly.
 - Finally, determine which register is used to return the value from func to main.
 
 | Parameter | Value Sought |

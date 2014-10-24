@@ -4,49 +4,7 @@
 
 You've spent the last 5 lessons transitioning from programming in assembly language to C.  In this lab, you'll use C to create an etch-a-sketch-type program that utilizes some subroutines from Lab 3.  You'll be expected to write clean, maintainable, modular code that is committed regularly to Git.
 
-### Required Functionality
-
-
-Modify your assembly drawBlock function to take in 3 values: an x coordinate, a y coordinate, and a color.
-
-Create an etch-a-sketch program using the directional buttons of the LCD booster pack to control the position of the paint brush. The paint brush will draw 8x8 blocks of pixels. The user will change the position of the paint brush by pressing the directional buttons. Each button press will move the cursor 8 pixels in the direction pressed (see table below). Pressing the auxiliary button (SW3) will toggle the mode of the paint brush between filling squares and clearing squares.
-
-| Button | Function |
-| --- | --- |
-| SW5/Up |	Move the cursor up 1 block |
-| SW4/Down	| Move the cursor down 1 block |
-| SW2/Left	| Move the cursor left 1 block |
-| SW1/Right | Move the cursor right 1 block |
-| SW3/Aux | Toggle the color of the paint brush |
-
-
-### B Functionality
-
-Create a bouncing block!  This block should move across the screen with no more than 8 pixels per jump.  It should bounce off the walls appropriately, similar to assignment 6.  An adequate delay movement should be added between each block movement.  Your starting position and starting x and y velocities should be initialized in your header, or should be randomly generated.
-
-### A Functionality
-
-Create Pong on your display! Create a single paddle that will move up and down on one side of the display, controlled by the up and down buttons.  The block will bounce off the paddle like it bounces off the wall.  When the block misses hitting the paddle, the game will end.
-
-### Bonus Functionality
-
-Each bonus functionality can be achieved in conjunction with either A or B functionality.  These functionalities must be written in assembly and called by C.  Each is worth 5 points.
-
-Circle: Instead of a bouncing block, create a bouncing circular ball!
-
-Fine movement: Instead of having the ball/paddle move in 8-pixel jumps, have it move in 1-pixel jumps.
-
-Inverted display: With a push of the SW3 button, invert the display.  Dark pixels will become light pixels, and vice versa.  Instead of a bouncing dark ball, you will have a bouncing light ball.
-
-Note:  The maximum lab grade cannot exceed 105.
-
-## Given Code
-- [lab4.c](lab4.c)
-- [nokia.asm](nokia.asm)
-- [simpleLab4.c](simpleLab4.c)
-
 ## Prelab
-
 
 ### Data types
 
@@ -125,6 +83,132 @@ What is the role of the `.global` directive in an .asm file (used in lines 28-32
 
 *`.global` can either define or reference a variable that is used by multiple files. The compiler chooses where the variable is actually allocated.*
 
+## Code Discussion
+
+### B Functionality
+The code below was the main function that fulfilled the requirement for B functionality. It is a function that inputs the ball's current position, velocity, and upper limit. The output is a `SignedInt8Pair` which is a tuple of two signed 8-bit values. The output notifies the calling function of the ball's new position and new velocity, which changes on collision.
+
+```
+SignedInt8Pair move1d(sint8 position, sint8 velocity, sint8 upperbound) {
+	SignedInt8Pair c;
+	if (position + velocity <= upperbound) {
+		if (position + velocity >= 0) {
+			c.x = position + velocity;
+			c.y = velocity;
+		} else {
+			c.x = 0;
+			c.y = -velocity;
+		}
+	} else {
+		c.x = upperbound;
+		c.y = -velocity;
+	}
+	return c;
+}
+```
+
+### A Functionality
+For A functionality, a special case arises for collisions on the left wall. One posibility is that the ball rebounds off the paddle and the game continues as normal. Another, is that the player misses and the game ends. I took the opportunity in the former case to print a capital 'L' on the screen to let the player know he lost. An infinite loop afterward was a succinct way to stop other things from happening after gameover.
+
+```
+//when ball hits left row, check collision
+		if (position.x<=0) {
+			if (position.y < paddle || position.y > paddle + PADDLE_SIZE){
+				//game over, taunt player
+				clearDisplay();
+				drawBlock(1,4);
+				drawBlock(2,4);
+				drawBlock(3,4);
+				drawBlock(4,4);
+				drawBlock(4,5);
+				drawBlock(4,6);
+				while (TRUE);
+			} else {
+				//collision, rebound ball
+				velocity.x = -velocity.x;
+			}
+		}
+```
+The following code is the input checking for moving the paddle. It would have been straight forward, but for better playability I chose to delay input checking on a different interval than game update speed.
+```
+cnt=0;
+		for(;cnt<1000;cnt++){
+			cnt2=0;
+			for(;cnt2<95;cnt2++);
+			if (button_press==FALSE){
+				if (UP_BUTTON == 0 && paddle > 0){
+					paddle--;
+					button_press=TRUE;
+				} else if (DOWN_BUTTON == 0
+						   && (paddle+PADDLE_SIZE) < Y_UPPER_BOUND){
+					paddle++;
+					button_press=TRUE;
+				}
+			}
+		}
+		if (button_press==TRUE){
+			if (inputDelay >= 2 ){
+				inputDelay=0;
+				button_press=FALSE;
+			} else {
+				inputDelay++;
+			}
+		}
+```
+
+### Extra Credit Ball
+This functionality required an additional `extern` function description, and a corresponding subroutine in `nokia.asm`. In C below, the `drawCircle` is equivalent to `drawBlock()` in practice.
+```
+extern void drawCircle(unsigned char row, unsigned char col);
+...
+void main(void) {
+...
+  drawCircle(position.y,position.x);
+...
+}
+```
+In assembly, I defined the circle bitmap explicitly. I took some artistic liberty in this functionality and made a "circle". It looks best whilst squinting. The assembly code takes advantage of the automatic page increase function of the Nokia display. I only had to sequentially write the 8-bit pages.
+
+```
+drawCircle:
+	push	R12
+	push	R13
+
+	rla.w	R13					; the column address needs multiplied
+	rla.w	R13					; by 8in order to convert it into a
+	rla.w	R13					; pixel address.
+	call	#setAddress			; move cursor to upper left corner of block
+
+	mov		#1, R12
+	mov		#0x08, R13
+	call	#writeNokiaByte
+	mov		#0x3C, R13
+	call	#writeNokiaByte
+	mov		#0x7E, R13
+	call	#writeNokiaByte
+	mov		#0xFE, R13
+	call	#writeNokiaByte
+	mov		#0x7F, R13
+	call	#writeNokiaByte
+	mov		#0x7E, R13
+	call	#writeNokiaByte
+	mov		#0x3c, R13
+	call	#writeNokiaByte
+	mov		#0x10, R13
+	call	#writeNokiaByte
+
+	pop		R13
+	pop		R12
+
+	ret
+```
+## Debugging
+Getting the initial display of a bouncing block to show correctly was a slight problem. At first I was not separating the `clearDisplay` and `drawBlock` calls by any delay. Implemented this way, the block appeared for a barely perceptible time. It looked incredibly faint. I fixed it by clearing, drawing, *then* waiting.
+
+One bug that required a lot of tweaking was finding the right balance of input checking to game speed, and then finding the right amount of game 'ticks' to accept the player's input again. It required two extra counter variables, `cnt2` and `inputDelay`, where the previous implementations only required one counter, `cnt`.
+
+## Conclusion
+I learned in this lab that coding in C is much more readable than assembly. It is worth the slight learning curve to transition to programming mostly in C while supplementing in assembly. In retrospect, it would have been simpler to implement the inputs as hardware interrupts instead of discrete polling intervals. It would be cleaner to write, easier to understand, and have less potential for bugs.
 
 ## Grading
 

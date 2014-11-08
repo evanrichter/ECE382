@@ -20,3 +20,5 @@
 |  STOP  |       1dee817      |
 |   FFW  |       1de18e7      |
 |   REW  |       1de9867      |
+
+[functionality](https://www.youtube.com/watch?v=Q5xAEBiSjDQ) <-- submitted at 1620 on 8 NOV

@@ -41,11 +41,13 @@ Reading the signal from the scope, I found the following codes corresponded to b
 Day 2 - Functionality
 ---
 
-Having successfully reverse engineered the remote control, I was able to re-purpose it to control LED input and output. The image below shows the outline of my program's flow.
+Having successfully reverse engineered the remote control, I was able to re-purpose it to control LED input and output. The image below shows the outline of my program's flow, driven almost entirely by interrupts.
 
 ![](./images/schematic.jpg "Schematic")
 
-It is driven almost entirely by interrupts. When P2.6 drops low, it is beginning to receive an IR signal, and the following code fires:
+### Receiving an IR Packet
+
+When P2.6 drops low, it is beginning to receive an IR signal, and the following code fires:
 
 ```
 pulseDuration = TAR;
@@ -71,10 +73,10 @@ LOW_2_HIGH;
 break;
 ```
 
-A negative edge means that the time spent in logic 1 is ready to be measured and classified as a start bit, data 0, data 1 (the Timer_A overflow flag determines the end of a packet). The code segment also handles compiling the 1s and 0s into a complete packet, stored in `irPacket`. The end of that code turns off the timer, resetting the `TAR` register and stopping counting.
+A negative edge means that the time spent in logic 1 is ready to be measured and classified as a start bit, data 0, data 1 (the Timer_A overflow flag determines the end of a packet). The code segment also handles compiling the 1s and 0s into a complete packet, stored in `irPacket`. The end of that code turns off the timer, stopping the counting.
 
 
-The next code segment runs when a positive edge on P2.6 is detected.
+The next code segment runs when a positive edge on P2.6 is detected. It starts the `TAR` at 0 so that the length of the logic 1 is measured. `Timer_A` is started, and the next interrupt to be triggered is set to be a negative edge.
 
 ```
 TAR = 0x0000;
@@ -82,6 +84,75 @@ TACTL = ID_3 | TASSEL_2 | MC_1 | TAIE;
 HIGH_2_LOW;
 break;
 ```
+
+When the remote stops transmitting a packet, it simply stops. There is no "end bit". To be sure that `irPacket` isn't given extra bits from the next packet, the `TACCR0` was set to about 10ms. When the `Timer_A` flag, `TAIFG`, is set, the interrupt calls the following code which stops the timer, and sets the `newIrPacket` flag.
+
+```
+TACTL = 0;
+packetIndex = 0;
+newIrPacket = TRUE;
+```
+
+### Decoding an IR Packet
+
+This section of code is a very simple case-switch that is run whenever an IR packet is received. The global constants are defined in `start5.h`, and correspond to the table above.
+
+*start5.h snippet*
+```
+#define		PWR		0x01dec837
+#define		ZER		0x01de00ff
+#define		ONE		0x01de807f
+#define		TWO		0x01de40bf
+#define		THR		0x01dec03f
+
+#define		FFW		0x01de18e7
+#define		RRW		0x01de9867
+#define		PLY		0x01de6897
+#define		STP		0x01dee817
+```
+
+*start5.c snippet*
+```
+if (newIrPacket) {
+	switch (irPacket) {
+		case PLY:
+			//turn on LED1
+			P1OUT |= BIT0;
+			break;
+		case STP:
+			//turn off LED1
+			P1OUT &= ~BIT0;
+			break;
+		case PWR:
+			//do stuff
+			break;
+		case FFW:
+			//turn on LED2
+			P1OUT |= BIT6;
+			break;
+		case RRW:
+			//turn off LED2
+			P1OUT &= ~BIT6;
+			break;
+		case ZER:
+			//do stuff
+			break;
+		case ONE:
+			//do stuff
+			break;
+		case TWO:
+			//do stuff
+			break;
+		case THR:
+			//do stuff
+			break;
+	}
+	newIrPacket = FALSE;
+	irPacket = 0;
+}
+```
+
+### Functionality video
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Q5xAEBiSjDQ" target="_blank"><img src="http://img.youtube.com/vi/Q5xAEBiSjDQ/0.jpg" 
 alt="functionality" width="240" height="180" border="10" /></a>

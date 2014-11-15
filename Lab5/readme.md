@@ -156,3 +156,8 @@ if (newIrPacket) {
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Q5xAEBiSjDQ" target="_blank"><img src="http://img.youtube.com/vi/Q5xAEBiSjDQ/0.jpg" 
 alt="functionality" width="240" height="180" border="10" /></a>
+
+Debugging & Conclusion
+---
+
+I ran into some minor issues while testing my program. One day I went into the lab and the code that was working the day before was not working anymore. The `test5.c` program was not entering the breakpoint I set when a new packet was received. 

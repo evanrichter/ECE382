@@ -6,30 +6,52 @@ int32	irPacket = 0;
 int8	newIrPacket = FALSE;
 
 //motor state
-int16	rightPWM  = 0x3000;
-int16	leftPWM = 0xD000;
-sint8	rightDirection = FORWARD;
-sint8	leftDirection = FORWARD;
+sint8	rightMotor = -10;
+sint8	leftMotor = 10;
 
-sint8 accelerate(int16* currPWM, sint8 direction) {
-	switch (direction) {
-		case BACKWARD:
-			if (*currPWM < PWMSTEPSIZE){
-				*currPWM = PWMSTEPSIZE - *currPWM;
-				direction = FORWARD;
-			}
-			else *currPWM -= PWMSTEPSIZE;
-			break;
-		case FORWARD:
-			if (*currPWM < MAXPWM - PWMSTEPSIZE) *currPWM += PWMSTEPSIZE;
-			else *currPWM = MAXPWM;
-			break;
-	}
-	return direction;
+
+sint8 accelerate(sint8 velocity) {
+	sint8 newVelocity = MAXVELOCITY;
+	if (velocity < MAXVELOCITY - 1) newVelocity = velocity + 1;
+	return newVelocity;
 }
 
-sint8 decelerate(int16* currPWM, sint8 direction) {
-	return -accelerate(currPWM, -direction);
+sint8 decelerate(sint8 velocity) {
+	sint8 newVelocity = -MAXVELOCITY;
+	if (velocity > -MAXVELOCITY + 1) newVelocity = velocity - 1;
+	return newVelocity;
+}
+
+void updatePWM() {
+	//set PWM mode for left
+	if (leftMotor < 0) {
+		TA1CCTL1 = OUTMOD_7;		//inverted PWM mode
+		P2OUT |= BIT1;				//direction set to 1
+		P2OUT |= BIT0;				//set enable
+		TA1CCR1 = -(leftMotor * PWMSCALE);
+	} else if (leftMotor == 0) {
+		P2OUT &= ~BIT0;				//simply turn off enable
+	} else {
+		TA1CCTL1 = OUTMOD_3;		//normal PWM mode
+		P2OUT &= ~BIT1;				//direction set to 0
+		P2OUT |= BIT0;				//set enable
+		TA1CCR1 = leftMotor * PWMSCALE;
+	}
+
+	//same for right
+	if (rightMotor < 0) {
+		TA1CCTL2 = OUTMOD_7;		//inverted PWM mode
+		P2OUT |= BIT5;				//direction set to 1
+		P2OUT |= BIT3;				//set enable
+		TA1CCR2 = -(rightMotor * PWMSCALE);
+	} else if (rightMotor == 0) {
+		P2OUT &= ~BIT3;				//simply turn off enable
+	} else {
+		TA1CCTL2 = OUTMOD_3;		//normal PWM mode
+		P2OUT &= ~BIT5;				//direction set to 0
+		P2OUT |= BIT3;				//set enable
+		TA1CCR2 = rightMotor * PWMSCALE;
+	}
 }
 
 // -----------------------------------------------------------------------
@@ -39,85 +61,102 @@ void main(void) {
 
 	initMSP430();		// Setup MSP to process IR and buttons
 
+	updatePWM();
+
 	while(1)  {
 		if (newIrPacket) {
 			switch (irPacket) {
-				case ZER:
-					//do stuff
+				case ZERO:
+					//do stuff. how about a donut?
+					leftMotor = -MAXVELOCITY;
+					rightMotor = MAXVELOCITY;
 					break;
 				case ONE:
 					//accelerate left motor
-					leftDirection = accelerate(&leftPWM, leftDirection);
+					leftMotor = accelerate(leftMotor);
 					break;
 				case TWO:
 					//accelerate both motors
-					leftDirection = accelerate(&leftPWM, leftDirection);
-					rightDirection = accelerate(&rightPWM, rightDirection);
+					leftMotor = accelerate(leftMotor);
+					rightMotor = accelerate(rightMotor);
 					break;
-				case THR:
+				case THREE:
 					//accelerate right motor
-					rightDirection = accelerate(&rightPWM, rightDirection);
+					rightMotor = accelerate(rightMotor);
 					break;
-				case FOU:
+				case FOUR:
 					//stop left motor
-					leftPWM = 0;
+					leftMotor = 0;
 					break;
-				case FIV:
+				case FIVE:
 					//stop both motors
-					leftPWM = 0;
-					rightPWM = 0;
+					leftMotor = 0;
+					rightMotor = 0;
 					break;
 				case SIX:
 					//stop right motor
-					rightPWM = 0;
+					rightMotor = 0;
 					break;
-				case SEV:
+				case SEVEN:
 					//decelerate left motor
-					leftDirection = decelerate(&leftPWM, leftDirection);
+					leftMotor = decelerate(leftMotor);
 					break;
-				case EIG:
+				case EIGHT:
 					//decelerate both motors
-					leftDirection = decelerate(&leftPWM, leftDirection);
-					rightDirection = decelerate(&rightPWM, rightDirection);
+					leftMotor = decelerate(leftMotor);
+					rightMotor = decelerate(rightMotor);
 					break;
-				case NIN:
+				case NINE:
 					//decelerate right motor
-					rightDirection = decelerate(&rightPWM, rightDirection);
+					rightMotor = decelerate(rightMotor);
 					break;
 			}
+
+			//updatePWM();
+
 			newIrPacket = FALSE;
 			irPacket = 0;
 		}
-	} // end infinite loop
-} // end main
+	}
+}
 
 
 void initMSP430() {
-
 	IFG1=0;
 	WDTCTL=WDTPW+WDTHOLD;
 
 	BCSCTL1 = CALBC1_8MHZ;
 	DCOCTL = CALDCO_8MHZ;
 
-	P2SEL  &= ~BIT6;					// Setup P2.6 for IR receiver
+	//P2.0, P2.1, P2.3, P2.5 are GPIO for left/right direction/enable
+	P2DIR |=   BIT0 | BIT1 | BIT3 | BIT5;
+	P2OUT &= ~(BIT0 | BIT1 | BIT3 | BIT5);		//turn them off to start
+
+    //P2.2 and P2.4 used for PWM control
+    P2DIR |= BIT2 | BIT4;
+    P2SEL |= BIT2 | BIT4;		//primary peripheral control mode for direct PWM output
+
+    //Timer A1 for PWM stuff
+    TA1CTL &= ~TAIFG;
+    TA1CTL = TASSEL_2 | ID_3 | MC_1 | TAIE;
+    TA1CCR0 = PWMPERIOD;
+    TA1CCR1 = 1 * PWMSCALE;			//pwmLeft
+    TA1CCR2 = 1 * PWMSCALE;			//pwmRight
+    TA1CCTL1 = OUTMOD_3;
+    TA1CCTL2 = OUTMOD_3;
+
+    //Pin 2.6 for IR
+    P2SEL  &= ~BIT6;
 	P2SEL2 &= ~BIT6;
 	P2DIR &= ~BIT6;
 	P2IFG &= ~BIT6;
 	P2IE  |= BIT6;
 	HIGH_2_LOW;
 
-
-	P1DIR = BIT0 | BIT6;		// Enable updates to the LED
-	P1OUT = (BIT0 | BIT6);		// An turn the LED on
-
-	TA0CCR0 = 10000;			// create a 10mS roll-over period for Timer_A
+	//IR input timer
+	TA0CCR0 = 10000;
 	TA0CTL &= ~TAIFG;
 	TA0CTL = TASSEL_2 | ID_3 | MC_1 | TAIE;
-
-	TA1CCR0 = 2015;
-	TA1CTL &= ~TAIFG;
-	TA1CTL = TASSEL_2 | ID_0 | MC_1 | TAIE;
 
 	_enable_interrupt();
 }
@@ -161,60 +200,29 @@ __interrupt void pinChange (void) {
 	}
 
 	P2IFG &= ~BIT6;
-
 }
 
 
 #pragma vector = TIMER0_A1_VECTOR		//Timer_A0 is for IR packet reading
-#pragma vector = TIMER1_A1_VECTOR		//Timer_A1 is for PWM management
 __interrupt void timerOverflow (void) {
 
 	static int8 samePacketCounter = 0;
 	static int32 prevPacket = 0;
 
 	if (TA0CTL | TAIE == TRUE) { // Timer_A0 overflow
-		if (irPacket != prevPacket | samePacketCounter > 100){
+		if (irPacket != prevPacket | samePacketCounter > 0){
 			newIrPacket = TRUE;
 			prevPacket = irPacket;
 		} else {
 			samePacketCounter++;
 		}
-		TA0CTL = 0;
 	}
 
-	else if (TA1CTL | TAIE == TRUE) { // Timer_A1 overflow
-		static int8 prev = OFF;
-		int16 smallerPWM;
-		int16 largerPWM;
-		int16 slowerMotor;
-		int16 fasterMotor;
-
-		if (rightPWM < leftPWM) {
-			smallerPWM = rightPWM;
-			slowerMotor = RIGHTMOTOR;
-		} else {
-			smallerPWM = leftPWM;
-			slowerMotor = LEFTMOTOR;
-		}
-
-		switch (prev) {
-		case OFF:
-			//turn on both motors
-			TA1CCR0 = smallerPWM;
-			prev = SHORTER;
-			break;
-		case SHORTER:
-			//turn off slower motor
-			TA1CCR0 = largerPWM - smallerPWM;
-			prev = DIFFERENCE;
-			break;
-		case DIFFERENCE:
-			//turn off faster motor
-			TA1CCR0 = MAXPWM - largerPWM;
-			prev = OFF;
-			break;
-		}
-
-		TA1CTL &= ~TAIFG;
-	}
+	TA0CTL = 0;
+	//TA1CTL &= ~TAIFG;
+	//TA1CTL = 0;
+}
+#pragma vector = TIMER1_A1_VECTOR
+__interrupt void stuff (void) {
+	TA1CTL &= ~TAIFG;
 }

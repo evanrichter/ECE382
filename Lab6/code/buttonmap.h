@@ -16,12 +16,12 @@
 #define		ONE		0x01de807f
 #define		TWO		0x01de40bf
 #define		THREE	0x01dec03f
-#define		FOUR	0x01dea03f
-#define		FIVE	0x01ded03f
-#define		SIX		0x01dee03f
-#define		SEVEN	0x01de503f
-#define		EIGHT	0x01de403f
-#define		NINE	0x01de303f
+#define		FOUR	0x01de20df
+#define		FIVE	0x01dea05f
+#define		SIX		0x01de609f
+#define		SEVEN	0x01dee01f
+#define		EIGHT	0x01de10ef
+#define		NINE	0x01de906f
 
 #define		FFW		0x01de18e7
 #define		RRW		0x01de9867

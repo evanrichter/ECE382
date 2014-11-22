@@ -6,33 +6,39 @@ int32	irPacket = 0;
 int8	newIrPacket = FALSE;
 
 //motor state
-sint8	rightMotor = -10;
-sint8	leftMotor = 10;
+sint8	rightMotor = 0;
+sint8	leftMotor = 0;
 
 
 sint8 accelerate(sint8 velocity) {
-	sint8 newVelocity = MAXVELOCITY;
-	if (velocity < MAXVELOCITY - 1) newVelocity = velocity + 1;
+	sint8 newVelocity;
+	if (velocity < -MINVELOCITY) newVelocity = velocity + VELOCITYSTEP;
+	else if (velocity == -MINVELOCITY) newVelocity = 0;
+	else if (velocity == 0) newVelocity = MINVELOCITY;
+	else if (velocity < MAXVELOCITY && velocity > 0) newVelocity = velocity + VELOCITYSTEP;
 	return newVelocity;
 }
 
 sint8 decelerate(sint8 velocity) {
-	sint8 newVelocity = -MAXVELOCITY;
-	if (velocity > -MAXVELOCITY + 1) newVelocity = velocity - 1;
+	sint8 newVelocity;
+	if (velocity > MINVELOCITY) newVelocity = velocity - VELOCITYSTEP;
+	else if (velocity == MINVELOCITY) newVelocity = 0;
+	else if (velocity == 0) newVelocity = -MINVELOCITY;
+	else if (velocity > -MAXVELOCITY && velocity <= MINVELOCITY) newVelocity = velocity - VELOCITYSTEP;
 	return newVelocity;
 }
 
 void updatePWM() {
 	//set PWM mode for left
 	if (leftMotor < 0) {
-		TA1CCTL1 = OUTMOD_7;		//inverted PWM mode
+		TA1CCTL1 = OUTMOD_3;		//inverted PWM mode
 		P2OUT |= BIT1;				//direction set to 1
 		P2OUT |= BIT0;				//set enable
 		TA1CCR1 = -(leftMotor * PWMSCALE);
 	} else if (leftMotor == 0) {
 		P2OUT &= ~BIT0;				//simply turn off enable
 	} else {
-		TA1CCTL1 = OUTMOD_3;		//normal PWM mode
+		TA1CCTL1 = OUTMOD_7;		//normal PWM mode
 		P2OUT &= ~BIT1;				//direction set to 0
 		P2OUT |= BIT0;				//set enable
 		TA1CCR1 = leftMotor * PWMSCALE;
@@ -40,14 +46,14 @@ void updatePWM() {
 
 	//same for right
 	if (rightMotor < 0) {
-		TA1CCTL2 = OUTMOD_7;		//inverted PWM mode
+		TA1CCTL2 = OUTMOD_3;		//inverted PWM mode
 		P2OUT |= BIT5;				//direction set to 1
 		P2OUT |= BIT3;				//set enable
 		TA1CCR2 = -(rightMotor * PWMSCALE);
 	} else if (rightMotor == 0) {
 		P2OUT &= ~BIT3;				//simply turn off enable
 	} else {
-		TA1CCTL2 = OUTMOD_3;		//normal PWM mode
+		TA1CCTL2 = OUTMOD_7;		//normal PWM mode
 		P2OUT &= ~BIT5;				//direction set to 0
 		P2OUT |= BIT3;				//set enable
 		TA1CCR2 = rightMotor * PWMSCALE;
@@ -60,8 +66,6 @@ void updatePWM() {
 void main(void) {
 
 	initMSP430();		// Setup MSP to process IR and buttons
-
-	updatePWM();
 
 	while(1)  {
 		if (newIrPacket) {
@@ -110,9 +114,18 @@ void main(void) {
 					//decelerate right motor
 					rightMotor = decelerate(rightMotor);
 					break;
+				case PLY:
+					rightMotor = MINVELOCITY;
+					leftMotor = MINVELOCITY;
+					updatePWM();
+					int16 cnt = 0;
+					while (cnt<0xef) cnt++;
+					rightMotor = 0;
+					leftMotor = 0;
+					break;
 			}
 
-			//updatePWM();
+			updatePWM();
 
 			newIrPacket = FALSE;
 			irPacket = 0;
@@ -169,7 +182,7 @@ __interrupt void pinChange (void) {
 	int16	pulseDuration;
 
 	if (IR_PIN)		pin=1;	else pin=0;
-
+	if (!newIrPacket){
 	switch (pin) {
 		case 0:
 			pulseDuration = TA0R;
@@ -197,6 +210,7 @@ __interrupt void pinChange (void) {
 			TA0CTL = ID_3 | TASSEL_2 | MC_1 | TAIE;
 			HIGH_2_LOW;
 			break;
+	}
 	}
 
 	P2IFG &= ~BIT6;

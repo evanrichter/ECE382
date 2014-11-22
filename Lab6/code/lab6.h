@@ -23,6 +23,8 @@ __interrupt void timerOverflow (void);
 #define		HIGH_2_LOW		P2IES |= BIT6
 #define		LOW_2_HIGH		P2IES &= ~BIT6
 
-#define		PWMPERIOD		PWMSCALE * MAXVELOCITY * 1.3
+#define		PWMPERIOD		PWMSCALE * MAXVELOCITY * 1.1
 #define		PWMSCALE		0xFF
-#define		MAXVELOCITY		20
+#define		VELOCITYSTEP	2
+#define		MAXVELOCITY		24
+#define		MINVELOCITY		16		//this should negate the noise problem on IR

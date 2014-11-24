@@ -78,3 +78,8 @@ switch (irPacket) {
 		break;
 }
 ```
+
+Wiring
+---
+
+![](./images/wiring.jpg "Wiring")

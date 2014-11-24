@@ -16,6 +16,7 @@ sint8 accelerate(sint8 velocity) {
 	else if (velocity == -MINVELOCITY) newVelocity = 0;
 	else if (velocity == 0) newVelocity = MINVELOCITY;
 	else if (velocity < MAXVELOCITY && velocity > 0) newVelocity = velocity + VELOCITYSTEP;
+	else newVelocity = MAXVELOCITY;
 	return newVelocity;
 }
 
@@ -25,6 +26,7 @@ sint8 decelerate(sint8 velocity) {
 	else if (velocity == MINVELOCITY) newVelocity = 0;
 	else if (velocity == 0) newVelocity = -MINVELOCITY;
 	else if (velocity > -MAXVELOCITY && velocity <= MINVELOCITY) newVelocity = velocity - VELOCITYSTEP;
+	else newVelocity = -MAXVELOCITY;
 	return newVelocity;
 }
 
@@ -115,11 +117,18 @@ void main(void) {
 					rightMotor = decelerate(rightMotor);
 					break;
 				case PLY:
-					rightMotor = MINVELOCITY;
-					leftMotor = MINVELOCITY;
+					rightMotor = MAXVELOCITY;
+					leftMotor = MAXVELOCITY;
 					updatePWM();
-					int16 cnt = 0;
-					while (cnt<0xef) cnt++;
+					_delay_cycles(1500000);
+					rightMotor = 0;
+					leftMotor = 0;
+					break;
+				case STP:
+					rightMotor = -MAXVELOCITY;
+					leftMotor = -MAXVELOCITY;
+					updatePWM();
+					_delay_cycles(2500000);
 					rightMotor = 0;
 					leftMotor = 0;
 					break;

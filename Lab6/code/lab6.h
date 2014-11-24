@@ -25,6 +25,6 @@ __interrupt void timerOverflow (void);
 
 #define		PWMPERIOD		PWMSCALE * MAXVELOCITY * 1.1
 #define		PWMSCALE		0xFF
-#define		VELOCITYSTEP	2
+#define		VELOCITYSTEP	1
 #define		MAXVELOCITY		24
-#define		MINVELOCITY		16		//this should negate the noise problem on IR
+#define		MINVELOCITY		12		//this should negate the noise problem on IR

@@ -82,4 +82,4 @@ switch (irPacket) {
 Wiring
 ---
 
-![](./images/wiring.jpg "Wiring")
+![](./images/wiring2.jpg "Wiring")

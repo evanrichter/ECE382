@@ -37,6 +37,7 @@ Consider the hardware interface. Which ADC10 channels will you use? Which pins c
 Consider the interface you'll create to your sensors. Will you block or use interrupts? Will you convert one sensor at a time or multiple?
 
 I will use interrupts triggered by a timer to poll the sensors. The order of action will be:
+
 1. Post previous value to the respective global variable
 
 2. Set up the ADC to the next input channel

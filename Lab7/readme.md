@@ -17,6 +17,37 @@ Test your sensors with a DMM. Ensure they are functional. What would good refere
 |   6 in   |         0.77         |          1.06          |          0.63         |
 |   8 in   |         0.74         |          0.91          |          0.60         |
 
+Using the following script I wrote up, converting voltages to 10-bit binary values was pretty simple:
+
+```python
+bits = 10
+mid = 1.5
+
+while True:
+    analog = input('value to convert:')
+    digital = ''
+    compare = mid
+    step = mid/2
+    for b in xrange(bits):
+        if analog > compare:
+            digital += '1'
+            compare += step
+        else:
+            digital += '0'
+            compare -= step
+        step = step/2
+    print str(analog) + ' to digital: ' + str(digital)
+    print ''
+```
+
+| Distance | Quantized Value Left | Quantized Value Center | Quantized Value Right |
+|:--------:|:--------------------:|:----------------------:|:---------------------:|
+|   1 in   |      1000111010      |       1101010101       |       1000010001      |
+|   2 in   |      0110011001      |       1001011000       |       0110001000      |
+|   4 in   |      0100101000      |       0110010010       |       0100010001      |
+|   6 in   |      0100000110      |       0101101001       |       0011010111      |
+|   8 in   |      0011111100      |       0100110110       |       0011001100      |
+
 Consider how you'll setup the ADC10 subsystem. What are the registers you'll need to use? Which bits in those registers are important? What's the initialization sequence you'll need?
 
 |   Register  |              Function             |

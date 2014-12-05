@@ -14,5 +14,6 @@ while True:
             digital += '0'
             compare -= step
         step = 0.5*step
-    print str(analog) + ' to digital: ' + str(digital)
+    hexformat = hex(int(digital, 2))
+    print str(analog) + ' to digital: ' + str(hexformat)
     print ''

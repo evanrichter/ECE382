@@ -195,12 +195,13 @@ void initMSP430() {
 	ADC10CTL0 = 0;											// Turn off ADC subsystem
 	ADC10CTL1 = INCH_4 | ADC10DIV_3 ;						// Channel 4, ADC10CLK/4
 	ADC10AE0 = BIT4;		 								// Make P1.4 analog input
-	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;		// Vcc & Vss as reference
+	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC ;		// Vcc & Vss as reference
+	ADC10CTL0 |= ADC10IE;									// enable interrupts
 	ADC10CTL0 |= ADC10SC;									// Start a conversion
 	while(ADC10CTL1 & ADC10BUSY);
 
 	_enable_interrupt();
-	_BIS_SR(GIE);			// suggested by http://homepages.ius.edu/RWISMAN/C335/HTML/msp430Interrupts.HTM
+	//__bis_SR_register(CPUOFF + GIE);			// suggested by http://www.swarthmore.edu/NatSci/echeeve1/Class/e91/Lectures/E91(4)TimerA_Interrupts.pdf
 
 }
 
@@ -246,7 +247,7 @@ __interrupt void pinChange (void) {
 	P2IFG &= ~BIT6;
 }
 
-
+#pragma vector = TIMER1_A1_VECTOR
 #pragma vector = TIMER0_A1_VECTOR		//Timer_A0 is for IR packet reading
 __interrupt void timerOverflow (void) {
 
@@ -264,10 +265,9 @@ __interrupt void timerOverflow (void) {
 
 	TA0CTL = 0;
 }
-#pragma vector = ADC10_VECTOR		//ADC stuff
-__interrupt void pollADC (void) {
-	_BIC_SR(CPUOFF);		// suggested by http://homepages.ius.edu/RWISMAN/C335/HTML/msp430Interrupts.HTM
 
+#pragma vector = ADC10_VECTOR		//ADC stuff
+__interrupt void ADC10_ISR (void) {
 
 	static int8 nextSensor = RIGHT;
 
@@ -299,6 +299,5 @@ __interrupt void pollADC (void) {
 	//ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
 	ADC10CTL0 |= ADC10SC;		// Start the conversion
 
-
-	ADC10CTL0 &= ~ADC10IFG;
+	//__bic_SR_register_on_exit(CPUOFF);		// suggested by http://www.swarthmore.edu/NatSci/echeeve1/Class/e91/Lectures/E91(4)TimerA_Interrupts.pdf
 }

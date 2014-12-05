@@ -96,38 +96,7 @@ void getSensors(void){
 	rightDistance = ADC10MEM;
 }
 
-void getSensor(void){
-	while(ADC10CTL1 & ADC10BUSY);
-	ADC10CTL0 &= ~ENC;
 
-	switch(nextSensor) {
-		case LEFT:
-			rightDistance = ADC10MEM;			// record the distance
-			ADC10CTL1 = INCH_2 | ADC10DIV_3 ;	// set up next channel for recording
-			ADC10AE0 = BIT2;
-			nextSensor = CENTER;				// set new state
-			break;
-		case CENTER:
-			leftDistance = ADC10MEM;
-			ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
-			ADC10AE0 = BIT3;
-			nextSensor = RIGHT;
-			break;
-		case RIGHT:
-			centerDistance = ADC10MEM;
-			ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
-			ADC10AE0 = BIT4;
-			nextSensor = LEFT;
-			break;
-	}
-
-	ADC10CTL0 |= ENC;
-	ADC10CTL0 |= ADC10SC;		// Start the conversion
-}
-
-// -----------------------------------------------------------------------
-// Main loop: reads input from irPacket, directs PWM change as required
-// -----------------------------------------------------------------------
 void main(void) {
 
 	initMSP430();		// Setup MSP to process IR and buttons
@@ -135,10 +104,16 @@ void main(void) {
 	while(1)  {
 		getSensors();
 
-		if (centerDistance > C_4IN) {
+		if (centerDistance > C_1IN ) {
 			P1OUT |= BIT0;
 		} else {
 			P1OUT &= ~BIT0;
+		}
+
+		if (rightDistance > R_1IN ) {
+			P1OUT |= BIT6;
+		} else {
+			P1OUT &= ~BIT6;
 		}
 	}
 }
@@ -151,8 +126,8 @@ void initMSP430() {
 	BCSCTL1 = CALBC1_8MHZ;
 	DCOCTL = CALDCO_8MHZ;
 
-	P1DIR = BIT0;
-	P1DIR &= ~(BIT2 | BIT3 | BIT4);
+	P1DIR = BIT0 | BIT6;
+	P1DIR &= ~(BIT5 | BIT3 | BIT4);
 
 	//P2.0, P2.1, P2.3, P2.5 are GPIO for left/right direction/enable
 	P2DIR |=   BIT0 | BIT1 | BIT3 | BIT5;

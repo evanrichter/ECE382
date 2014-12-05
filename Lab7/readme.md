@@ -76,3 +76,9 @@ I will use interrupts triggered by a timer to poll the sensors. The order of act
 3. Tell `ADC10CTL0` to convert the current voltage
 
 4. Set a static state variable to tell the next interrupt what sensor was polled
+
+Functionality
+---
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=61hOISPYpQ4
+" target="_blank"><img src="http://img.youtube.com/vi/61hOISPYpQ4/0.jpg" 
+alt="functionality video" width="240" height="180" border="10" /></a>

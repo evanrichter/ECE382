@@ -15,6 +15,8 @@ int16	leftDistance = L_8IN;
 int16	centerDistance = C_8IN;
 int16	rightDistance = R_8IN;
 
+int8 nextSensor = LEFT;
+
 
 sint8 accelerate(sint8 velocity) {
 	sint8 newVelocity;
@@ -68,6 +70,35 @@ void updatePWM() {
 	}
 }
 
+void getSensor(void){
+	while(ADC10CTL1 & ADC10BUSY);
+	ADC10CTL0 &= ~ENC;
+
+	switch(nextSensor) {
+		case LEFT:
+			rightDistance = ADC10MEM;			// record the distance
+			ADC10CTL1 = INCH_2 | ADC10DIV_3 ;	// set up next channel for recording
+			ADC10AE0 = BIT2;
+			nextSensor = CENTER;				// set new state
+			break;
+		case CENTER:
+			leftDistance = ADC10MEM;
+			ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
+			ADC10AE0 = BIT3;
+			nextSensor = RIGHT;
+			break;
+		case RIGHT:
+			centerDistance = ADC10MEM;
+			ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
+			ADC10AE0 = BIT4;
+			nextSensor = LEFT;
+			break;
+	}
+
+	ADC10CTL0 |= ENC;
+	ADC10CTL0 |= ADC10SC;		// Start the conversion
+}
+
 // -----------------------------------------------------------------------
 // Main loop: reads input from irPacket, directs PWM change as required
 // -----------------------------------------------------------------------
@@ -76,77 +107,15 @@ void main(void) {
 	initMSP430();		// Setup MSP to process IR and buttons
 
 	while(1)  {
-		if (newIrPacket) {
-			switch (irPacket) {
-				case ZERO:
-					//do stuff. how about a donut?
-					leftMotor = -MAXVELOCITY;
-					rightMotor = MAXVELOCITY;
-					break;
-				case ONE:
-					//accelerate left motor
-					leftMotor = accelerate(leftMotor);
-					break;
-				case TWO:
-					//accelerate both motors
-					leftMotor = accelerate(leftMotor);
-					rightMotor = accelerate(rightMotor);
-					break;
-				case THREE:
-					//accelerate right motor
-					rightMotor = accelerate(rightMotor);
-					break;
-				case FOUR:
-					//stop left motor
-					leftMotor = 0;
-					break;
-				case FIVE:
-					//stop both motors
-					leftMotor = 0;
-					rightMotor = 0;
-					break;
-				case SIX:
-					//stop right motor
-					rightMotor = 0;
-					break;
-				case SEVEN:
-					//decelerate left motor
-					leftMotor = decelerate(leftMotor);
-					break;
-				case EIGHT:
-					//decelerate both motors
-					leftMotor = decelerate(leftMotor);
-					rightMotor = decelerate(rightMotor);
-					break;
-				case NINE:
-					//decelerate right motor
-					rightMotor = decelerate(rightMotor);
-					break;
-				case PLY:
-					rightMotor = MAXVELOCITY;
-					leftMotor = MAXVELOCITY;
-					updatePWM();
-					_delay_cycles(1500000);
-					rightMotor = 0;
-					leftMotor = 0;
-					break;
-				case STP:
-					rightMotor = -MAXVELOCITY;
-					leftMotor = -MAXVELOCITY;
-					updatePWM();
-					_delay_cycles(2500000);
-					rightMotor = 0;
-					leftMotor = 0;
-					break;
-			}
 
-			updatePWM();
+		getSensor();
+		getSensor();
+		getSensor();
 
-			newIrPacket = FALSE;
-			irPacket = 0;
+		if (centerDistance > R_4IN) {
+			P1OUT |= BIT0;
 		} else {
-			if (rightDistance > R_4IN) P1OUT |= BIT0;
-			else						P1OUT &= ~BIT0;
+			P1OUT &= ~BIT0;
 		}
 	}
 }
@@ -196,13 +165,11 @@ void initMSP430() {
 	ADC10CTL1 = INCH_4 | ADC10DIV_3 ;						// Channel 4, ADC10CLK/4
 	ADC10AE0 = BIT4;		 								// Make P1.4 analog input
 	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC ;		// Vcc & Vss as reference
-	ADC10CTL0 |= ADC10IE;									// enable interrupts
+	//ADC10CTL0 |= ADC10IE;									// enable interrupts
 	ADC10CTL0 |= ADC10SC;									// Start a conversion
-	while(ADC10CTL1 & ADC10BUSY);
+	//while(ADC10CTL1 & ADC10BUSY);
 
 	_enable_interrupt();
-	//__bis_SR_register(CPUOFF + GIE);			// suggested by http://www.swarthmore.edu/NatSci/echeeve1/Class/e91/Lectures/E91(4)TimerA_Interrupts.pdf
-
 }
 
 
@@ -264,40 +231,4 @@ __interrupt void timerOverflow (void) {
 	}
 
 	TA0CTL = 0;
-}
-
-#pragma vector = ADC10_VECTOR		//ADC stuff
-__interrupt void ADC10_ISR (void) {
-
-	static int8 nextSensor = RIGHT;
-
-	//ADC10CTL0 = 0;		// Turn off ADC subsystem
-	ADC10CTL0 &= ~ENC;
-
-	switch(nextSensor) {
-	case LEFT:
-		rightDistance = ADC10MEM;			// record the distance
-		ADC10CTL1 = INCH_2 | ADC10DIV_3 ;	// set up next channel for recording
-		ADC10AE0 = BIT2;
-		nextSensor = CENTER;				// set new state
-		break;
-	case CENTER:
-		leftDistance = ADC10MEM;
-		ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
-		ADC10AE0 = BIT3;
-		nextSensor = RIGHT;
-		break;
-	case RIGHT:
-		centerDistance = ADC10MEM;
-		ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
-		ADC10AE0 = BIT4;
-		nextSensor = LEFT;
-		break;
-	}
-
-	ADC10CTL0 |= ENC;
-	//ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
-	ADC10CTL0 |= ADC10SC;		// Start the conversion
-
-	//__bic_SR_register_on_exit(CPUOFF);		// suggested by http://www.swarthmore.edu/NatSci/echeeve1/Class/e91/Lectures/E91(4)TimerA_Interrupts.pdf
 }

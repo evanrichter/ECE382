@@ -70,6 +70,32 @@ void updatePWM() {
 	}
 }
 
+void getSensors(void){
+	ADC10CTL0 = 0;
+	ADC10CTL1 = INCH_2 | ADC10DIV_3 ;
+	ADC10AE0 = BIT2;
+	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+	ADC10CTL0 |= ADC10SC;
+	while(ADC10CTL1 & ADC10BUSY);
+	leftDistance = ADC10MEM;
+
+	ADC10CTL0 = 0;
+	ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
+	ADC10AE0 = BIT3;
+	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+	ADC10CTL0 |= ADC10SC;
+	while(ADC10CTL1 & ADC10BUSY);
+	centerDistance = ADC10MEM;
+
+	ADC10CTL0 = 0;
+	ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
+	ADC10AE0 = BIT4;
+	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+	ADC10CTL0 |= ADC10SC;
+	while(ADC10CTL1 & ADC10BUSY);
+	rightDistance = ADC10MEM;
+}
+
 void getSensor(void){
 	while(ADC10CTL1 & ADC10BUSY);
 	ADC10CTL0 &= ~ENC;
@@ -107,12 +133,9 @@ void main(void) {
 	initMSP430();		// Setup MSP to process IR and buttons
 
 	while(1)  {
+		getSensors();
 
-		getSensor();
-		getSensor();
-		getSensor();
-
-		if (centerDistance > R_4IN) {
+		if (centerDistance > C_4IN) {
 			P1OUT |= BIT0;
 		} else {
 			P1OUT &= ~BIT0;
@@ -129,6 +152,7 @@ void initMSP430() {
 	DCOCTL = CALDCO_8MHZ;
 
 	P1DIR = BIT0;
+	P1DIR &= ~(BIT2 | BIT3 | BIT4);
 
 	//P2.0, P2.1, P2.3, P2.5 are GPIO for left/right direction/enable
 	P2DIR |=   BIT0 | BIT1 | BIT3 | BIT5;
@@ -147,88 +171,4 @@ void initMSP430() {
     TA1CCTL1 = OUTMOD_3;
     TA1CCTL2 = OUTMOD_3;
 
-    //Pin 2.6 for IR
-    P2SEL  &= ~BIT6;
-	P2SEL2 &= ~BIT6;
-	P2DIR &= ~BIT6;
-	P2IFG &= ~BIT6;
-	P2IE  |= BIT6;
-	HIGH_2_LOW;
-
-	//IR input timer
-	TA0CCR0 = 10000;
-	TA0CTL &= ~TAIFG;
-	TA0CTL = TASSEL_2 | ID_3 | MC_1 | TAIE;
-
-	// ADC setup
-	ADC10CTL0 = 0;											// Turn off ADC subsystem
-	ADC10CTL1 = INCH_4 | ADC10DIV_3 ;						// Channel 4, ADC10CLK/4
-	ADC10AE0 = BIT4;		 								// Make P1.4 analog input
-	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC ;		// Vcc & Vss as reference
-	//ADC10CTL0 |= ADC10IE;									// enable interrupts
-	ADC10CTL0 |= ADC10SC;									// Start a conversion
-	//while(ADC10CTL1 & ADC10BUSY);
-
-	_enable_interrupt();
-}
-
-
-#pragma vector = PORT2_VECTOR
-__interrupt void pinChange (void) {
-
-	int8	pin;
-	int16	pulseDuration;
-
-	if (IR_PIN)		pin=1;	else pin=0;
-	if (!newIrPacket){
-	switch (pin) {
-		case 0:
-			pulseDuration = TA0R;
-			if      (pulseDuration < minLogic0Pulse);
-			else if (pulseDuration < maxLogic0Pulse){
-				irPacket = irPacket<<1;
-				irPacket = irPacket & 0xFFFFFFE;
-			}
-			else if (pulseDuration < minLogic1Pulse);
-			else if (pulseDuration < maxLogic1Pulse){
-				irPacket = irPacket<<1;
-				irPacket = irPacket | 0x1;
-			}
-			else if (pulseDuration < minStartPulse);
-			else if (pulseDuration < maxStartPulse){
-				irPacket = 0;
-			}
-
-			TA0CTL = 0;
-			LOW_2_HIGH;
-			break;
-
-		case 1:
-			TA0R = 0x0000;
-			TA0CTL = ID_3 | TASSEL_2 | MC_1 | TAIE;
-			HIGH_2_LOW;
-			break;
-	}
-	}
-
-	P2IFG &= ~BIT6;
-}
-
-#pragma vector = TIMER1_A1_VECTOR
-#pragma vector = TIMER0_A1_VECTOR		//Timer_A0 is for IR packet reading
-__interrupt void timerOverflow (void) {
-
-	static int8 samePacketCounter = 0;
-	static int32 prevPacket = 0;
-
-	if (TA0CTL | TAIE == TRUE) { // Timer_A0 overflow
-		if (irPacket != prevPacket | samePacketCounter > 0){
-			newIrPacket = TRUE;
-			prevPacket = irPacket;
-		} else {
-			samePacketCounter++;
-		}
-	}
-
-	TA0CTL = 0;
 }

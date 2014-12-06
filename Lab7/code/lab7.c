@@ -15,8 +15,6 @@ int16	leftDistance = L_8IN;
 int16	centerDistance = C_8IN;
 int16	rightDistance = R_8IN;
 
-int8 nextSensor = LEFT;
-
 
 sint8 accelerate(sint8 velocity) {
 	sint8 newVelocity;
@@ -71,31 +69,85 @@ void updatePWM() {
 }
 
 void getSensors(void){
-	ADC10CTL0 = 0;
-	ADC10CTL1 = INCH_2 | ADC10DIV_3 ;
-	ADC10AE0 = BIT2;
-	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
-	ADC10CTL0 |= ADC10SC;
-	while(ADC10CTL1 & ADC10BUSY);
-	leftDistance = ADC10MEM;
+	int16 leftSum = 0;
+	int16 centerSum = 0;
+	int16 rightSum = 0;
 
-	ADC10CTL0 = 0;
-	ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
-	ADC10AE0 = BIT3;
-	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
-	ADC10CTL0 |= ADC10SC;
-	while(ADC10CTL1 & ADC10BUSY);
-	centerDistance = ADC10MEM;
+	int8 i = 0;
+	for (;i<16;i++){
+		ADC10CTL0 = 0;
+		ADC10CTL1 = INCH_2 | ADC10DIV_3 ;
+		ADC10AE0 = BIT2;
+		ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+		ADC10CTL0 |= ADC10SC;
+		while(ADC10CTL1 & ADC10BUSY);
+		leftSum += ADC10MEM;
 
-	ADC10CTL0 = 0;
-	ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
-	ADC10AE0 = BIT4;
-	ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
-	ADC10CTL0 |= ADC10SC;
-	while(ADC10CTL1 & ADC10BUSY);
-	rightDistance = ADC10MEM;
+		ADC10CTL0 = 0;
+		ADC10CTL1 = INCH_3 | ADC10DIV_3 ;
+		ADC10AE0 = BIT3;
+		ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+		ADC10CTL0 |= ADC10SC;
+		while(ADC10CTL1 & ADC10BUSY);
+		centerSum += ADC10MEM;
+
+		ADC10CTL0 = 0;
+		ADC10CTL1 = INCH_4 | ADC10DIV_3 ;
+		ADC10AE0 = BIT4;
+		ADC10CTL0 = SREF_0 | ADC10SHT_3 | ADC10ON | ENC;
+		ADC10CTL0 |= ADC10SC;
+		while(ADC10CTL1 & ADC10BUSY);
+		rightSum += ADC10MEM;
+	}
+
+	leftDistance = leftSum >> 4;
+	centerDistance = centerSum >> 4;
+	rightDistance = rightSum >> 4;
 }
 
+void doombaStop(void) {
+	rightMotor = 0;
+	leftMotor = 0;
+	updatePWM();
+}
+
+void doombaBackup(void) {
+	rightMotor = -MAXVELOCITY;
+	leftMotor = -MAXVELOCITY;
+	updatePWM();
+}
+
+void doombaForward(void) {
+	rightMotor = MAXVELOCITY;
+	leftMotor = MAXVELOCITY;
+	updatePWM();
+}
+
+void doombaPivotLeft(void) {
+	rightMotor = MAXVELOCITY;
+	leftMotor = -MAXVELOCITY;
+	updatePWM();
+}
+
+void doombaLeft(void) {
+	rightMotor = 16;
+	leftMotor = 15;
+	updatePWM();
+}
+
+void doombaRight(void) {
+	rightMotor = 15;
+	leftMotor = 16;
+	updatePWM();
+}
+
+void doombaJustWait(void) {
+	__delay_cycles(5000000);
+}
+
+void doombaJustWaitaLittle(void) {
+	__delay_cycles(500000);
+}
 
 void main(void) {
 
@@ -106,14 +158,42 @@ void main(void) {
 
 		if (centerDistance > C_1IN ) {
 			P1OUT |= BIT0;
+
+			doombaStop();
+			doombaJustWait();
+
+			doombaBackup();
+			doombaJustWaitaLittle();
+
+			doombaPivotLeft();
+			doombaJustWaitaLittle();
+
+			doombaStop();
+			doombaJustWait();
+		} else if (rightDistance > 0x275) {
+			P1OUT &= ~BIT0;
+			P1OUT |= BIT6;
+
+			//too close!
+			doombaLeft();
+			doombaJustWaitaLittle();
+
+			doombaForward();
+			doombaJustWaitaLittle();
+		} else if (rightDistance > R_6IN) {
+			P1OUT &= ~BIT0;
+			P1OUT &= ~BIT6;
+
+			//continue on
+			doombaForward();
+			doombaJustWaitaLittle();
 		} else {
 			P1OUT &= ~BIT0;
-		}
-
-		if (rightDistance > R_1IN ) {
-			P1OUT |= BIT6;
-		} else {
 			P1OUT &= ~BIT6;
+
+			//too far!
+			doombaRight();
+			doombaJustWaitaLittle();
 		}
 	}
 }

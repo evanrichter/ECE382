@@ -16,8 +16,15 @@ __interrupt void pollADC (void);
 #define		C_6IN	0x169
 #define		C_8IN	0x136
 
-#define		R_1IN	0x211
+#define		R_1IN	0x275
 #define		R_2IN	0x188
 #define		R_4IN	0x111
 #define		R_6IN	0x0d7
 #define		R_8IN	0x0cc
+#define		R_THR	0x040
+
+#define		BUTTON	(P1IN & BIT3)
+
+#define		LEFT_L		1
+#define		HORSESHOE	2
+#define		OPENSPACE	3

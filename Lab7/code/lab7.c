@@ -11,12 +11,14 @@ sint8	rightMotor = 0;
 sint8	leftMotor = 0;
 
 //reported sensor distance
-int16	leftDistance = L_8IN;
-int16	centerDistance = C_8IN;
-int16	rightDistance = R_8IN;
+int16	leftDistance = 0;
+int16	centerDistance = 0;
+int16	rightDistance = 0;
 
+//calibration values for distances
 int16	rightTarget = 0;
 int16	centerTarget = 0;
+int16	rightNoWall = 0;
 
 int8	stage = LEFT_L;
 
@@ -110,7 +112,7 @@ void getSensors(void){
 }
 
 void doombaJustWaitaLittle(void) {
-	__delay_cycles(400000);
+	__delay_cycles(600000);
 }
 
 void doombaJustWait(void) {
@@ -126,31 +128,25 @@ void doombaStop(void) {
 }
 
 void doombaBackup(void) {
-	rightMotor = -14;
-	leftMotor = -14;
+	rightMotor = -16;
+	leftMotor = -16;
 	updatePWM();
 	doombaJustWaitaLittle();
 }
 
 void doombaForward(void) {
-	rightMotor = 13;
-	leftMotor = 13;
+	rightMotor = 16;
+	leftMotor = 16;
 	updatePWM();
-	doombaJustWaitaLittle();
+	doombaJustWait();
 }
 
-void doombaPivotLeft90(void) {
-	rightMotor = 17;
-	leftMotor = -17;
-	updatePWM();
-	__delay_cycles(2000000);
-}
-
-void doombaPivotRight90(void) {
-	rightMotor = -17;
-	leftMotor = 17;
-	updatePWM();
-	__delay_cycles(2000000);
+void doombaForwardThisMuch(int8 k) {
+	for (;k>0;k--){
+		doombaForward();
+		doombaStop();
+		doombaJustWait();
+	}
 }
 
 void doombaPivotLeft90Stutter(void) {
@@ -177,6 +173,48 @@ void doombaPivotRight90Stutter(void) {
 	}
 }
 
+void doombaLeft(void) {
+	rightMotor = 17;
+	leftMotor = 16;
+	updatePWM();
+	doombaJustWait();
+}
+
+void doombaRight(void) {
+	rightMotor = 16;
+	leftMotor = 17;
+	updatePWM();
+	doombaJustWait();
+}
+
+void blinkLED(int16 mask) {
+	int8 i = 0;
+	for(;i<15;i++){
+		P1OUT &= ~mask;
+		__delay_cycles(200000);
+		P1OUT |= mask;
+		__delay_cycles(200000);
+	}
+}
+void testWall(void){
+	getSensors();
+	if (centerDistance > centerTarget ) {
+		P1OUT |= BIT0;
+	} else {
+		P1OUT &= ~BIT0;
+	}
+
+	if (rightDistance > rightTarget + R_THR) {
+		P1OUT &= ~BIT6;
+	} else if (rightDistance > rightTarget - R_THR) {
+		P1OUT |= BIT6;
+	} else if (rightDistance < rightNoWall) {
+		blinkLED(BIT6);
+	} else {
+		P1OUT &= ~BIT6;
+	}
+}
+
 void main(void) {
 
 	initMSP430();		// Setup MSP to process IR and buttons
@@ -184,48 +222,58 @@ void main(void) {
 	while (BUTTON);
 	while (!BUTTON);
 	getSensors();
-	rightTarget = rightDistance;
+	rightTarget = rightDistance;	//calibrate right wall
+	blinkLED(BIT6);
 	while (BUTTON);
 	while (!BUTTON);
 	getSensors();
-	centerTarget = centerDistance;
-
+	centerTarget = centerDistance + 0x25;	//calibrate front wall
+	blinkLED(BIT0);
 	while (BUTTON);
 	while (!BUTTON);
+	getSensors();
+	rightNoWall = rightDistance + R_THR;	//calibrate front wall
+	blinkLED(BIT6);
+
+	while (BUTTON) testWall();
+	while (!BUTTON) testWall();
 
 	while(1)  {
-		//turning calibration
-		doombaPivotLeft90Stutter();
-		doombaStop();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-
-		doombaPivotRight90Stutter();
-		doombaStop();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		doombaJustWait();
-		/*getSensors();
-
+		getSensors();
 		switch (stage) {
 		case LEFT_L:
 			//follow right wall until head on
 			//90* left turn
+			testWall();
+			if (centerDistance > centerTarget ) {
+				doombaStop();
+				doombaPivotLeft90Stutter();
+				doombaStop();
+			} else if (rightDistance > rightTarget + R_THR) {
+				//too close!
+				doombaLeft();
+			} else if (rightDistance > rightTarget - R_THR) {
+				//continue on
+				doombaForward();
+			} else if (rightDistance < rightNoWall) {
+				stage = HORSESHOE;
+				break;
+			} else {
+				//too far!
+				doombaRight();
+			}
+
+			doombaStop();
+			doombaJustWait();
+			doombaJustWait();
 			break;
 		case HORSESHOE:
-			//when sensor reads "too far" go forward 1 length, 90* right turn, forward 1.5 lengths
+			//go forward 1 length, 90* right turn, forward 1.5 lengths
+			doombaForwardThisMuch(4);
+			doombaPivotRight90Stutter();
+			doombaForwardThisMuch(4);
+			doombaPivotRight90Stutter();
+			doombaForwardThisMuch(7);
 			break;
 		case OPENSPACE:
 			//pivot left if close wall
@@ -234,35 +282,6 @@ void main(void) {
 			//follow wall
 			break;
 		}
-		if (centerDistance > centerTarget ) {
-			P1OUT |= BIT0;
-			doombaStop();
-			doombaPivotLeft();
-			doombaStop();
-		} else if (rightDistance > rightTarget + R_THR) {
-			P1OUT &= ~BIT0;
-			P1OUT |= BIT6;
-
-			//too close!
-			doombaLeft();
-
-		} else if (rightDistance > rightTarget - R_THR) {
-			P1OUT &= ~BIT0;
-			P1OUT &= ~BIT6;
-
-			//continue on
-			doombaForward();
-		} else {
-			P1OUT &= ~BIT0;
-			P1OUT |= BIT6;
-
-			//too far!
-			doombaRight();
-		} */
-
-		doombaStop();
-		doombaJustWait();
-		doombaJustWait();
 	}
 }
 
@@ -274,10 +293,10 @@ void initMSP430() {
 	BCSCTL1 = CALBC1_8MHZ;
 	DCOCTL = CALDCO_8MHZ;
 
-	//P1.3 button as input
-	P1DIR &= ~BIT3;
-	P1REN |= BIT3;
-	P1OUT |= BIT3;
+	//P1.7 button as input (big red button
+	P1DIR &= ~BIT7;
+	P1REN &= ~BIT7;
+	P1OUT |= BIT7;
 
 	P1DIR |= BIT0 | BIT6;
 	P1DIR &= ~(BIT5 | BIT3 | BIT4);

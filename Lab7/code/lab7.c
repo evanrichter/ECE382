@@ -140,24 +140,41 @@ void doombaForward(void) {
 }
 
 void doombaPivotLeft90(void) {
-	rightMotor = 16;
-	leftMotor = -16;
+	rightMotor = 17;
+	leftMotor = -17;
 	updatePWM();
-	__delay_cycles(2150000);
+	__delay_cycles(2000000);
 }
 
-void doombaLeft(void) {
-	rightMotor = 14;
-	leftMotor = 12;
+void doombaPivotRight90(void) {
+	rightMotor = -17;
+	leftMotor = 17;
 	updatePWM();
-	doombaJustWaitaLittle();
+	__delay_cycles(2000000);
 }
 
-void doombaRight(void) {
-	rightMotor = 12;
-	leftMotor = 14;
-	updatePWM();
-	doombaJustWaitaLittle();
+void doombaPivotLeft90Stutter(void) {
+	int8 i = 0;
+	for(;i<35;i++){
+		rightMotor = MAXVELOCITY;
+		leftMotor = -MAXVELOCITY;
+		updatePWM();
+		__delay_cycles(200000);
+		doombaStop();
+		doombaJustWaitaLittle();
+	}
+}
+
+void doombaPivotRight90Stutter(void) {
+	int8 i = 0;
+	for(;i<34;i++){
+		rightMotor = -MAXVELOCITY;
+		leftMotor = MAXVELOCITY;
+		updatePWM();
+		__delay_cycles(200000);
+		doombaStop();
+		doombaJustWaitaLittle();
+	}
 }
 
 void main(void) {
@@ -178,13 +195,28 @@ void main(void) {
 
 	while(1)  {
 		//turning calibration
-		doombaPivotLeft90();
+		doombaPivotLeft90Stutter();
 		doombaStop();
 		doombaJustWait();
 		doombaJustWait();
 		doombaJustWait();
 		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
 
+		doombaPivotRight90Stutter();
+		doombaStop();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
+		doombaJustWait();
 		/*getSensors();
 
 		switch (stage) {

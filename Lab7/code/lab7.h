@@ -21,7 +21,7 @@ __interrupt void pollADC (void);
 #define		R_4IN	0x111
 #define		R_6IN	0x0d7
 #define		R_8IN	0x0cc
-#define		R_THR	0x040
+#define		R_THR	0x060
 
 #define		BUTTON	(P1IN & BIT3)
 

@@ -149,9 +149,8 @@ void doombaForwardThisMuch(int8 k) {
 	}
 }
 
-void doombaPivotLeft90Stutter(void) {
-	int8 i = 0;
-	for(;i<35;i++){
+void doombaPivotLeftThisMuch(int8 k) {
+	for(;k>0;k--){
 		rightMotor = MAXVELOCITY;
 		leftMotor = -MAXVELOCITY;
 		updatePWM();
@@ -161,9 +160,8 @@ void doombaPivotLeft90Stutter(void) {
 	}
 }
 
-void doombaPivotRight90Stutter(void) {
-	int8 i = 0;
-	for(;i<34;i++){
+void doombaPivotRightThisMuch(int8 k) {
+	for(;k>0;k--){
 		rightMotor = -MAXVELOCITY;
 		leftMotor = MAXVELOCITY;
 		updatePWM();
@@ -171,6 +169,14 @@ void doombaPivotRight90Stutter(void) {
 		doombaStop();
 		doombaJustWaitaLittle();
 	}
+}
+
+void doombaPivotLeft90Stutter(void) {
+	doombaPivotLeftThisMuch(35);
+}
+
+void doombaPivotRight90Stutter(void) {
+	doombaPivotRightThisMuch(34);
 }
 
 void doombaLeft(void) {
@@ -224,13 +230,13 @@ void main(void) {
 	getSensors();
 	rightTarget = rightDistance;	//calibrate right wall
 	blinkLED(BIT6);
-	while (BUTTON);
-	while (!BUTTON);
+	while (BUTTON) testWall();
+	while (!BUTTON) testWall();
 	getSensors();
 	centerTarget = centerDistance + 0x25;	//calibrate front wall
 	blinkLED(BIT0);
-	while (BUTTON);
-	while (!BUTTON);
+	while (BUTTON) testWall();
+	while (!BUTTON) testWall();
 	getSensors();
 	rightNoWall = rightDistance + R_THR;	//calibrate front wall
 	blinkLED(BIT6);
@@ -251,7 +257,10 @@ void main(void) {
 				doombaStop();
 			} else if (rightDistance > rightTarget + R_THR) {
 				//too close!
-				doombaLeft();
+				//doombaLeft();
+				doombaPivotLeftThisMuch(6);
+				doombaForward();
+				doombaPivotRightThisMuch(2);
 			} else if (rightDistance > rightTarget - R_THR) {
 				//continue on
 				doombaForward();
@@ -260,26 +269,55 @@ void main(void) {
 				break;
 			} else {
 				//too far!
-				doombaRight();
+				//doombaRight();
+				doombaPivotRightThisMuch(5);
+				doombaForward();
+				doombaPivotLeftThisMuch(3);
 			}
 
 			doombaStop();
-			doombaJustWait();
-			doombaJustWait();
+			doombaJustWaitaLittle();
+			//doombaJustWait();
 			break;
 		case HORSESHOE:
 			//go forward 1 length, 90* right turn, forward 1.5 lengths
-			doombaForwardThisMuch(4);
+			doombaForwardThisMuch(5);
 			doombaPivotRight90Stutter();
-			doombaForwardThisMuch(4);
+			doombaForwardThisMuch(12);
 			doombaPivotRight90Stutter();
-			doombaForwardThisMuch(7);
+			doombaForwardThisMuch(9);
+
+			stage = OPENSPACE;
 			break;
 		case OPENSPACE:
 			//pivot left if close wall
 			//follow wall until head on
 			//90* left
 			//follow wall
+			testWall();
+			if (centerDistance > centerTarget ) {
+				doombaStop();
+				doombaPivotLeft90Stutter();
+				doombaStop();
+			} else if (rightDistance > rightTarget + R_THR) {
+				//too close!
+				//doombaLeft();
+				doombaPivotLeftThisMuch(6);
+				doombaForward();
+				doombaPivotRightThisMuch(2);
+			} else if (rightDistance > rightTarget - R_THR) {
+				//continue on
+				doombaForward();
+			} else {
+				//too far!
+				//doombaRight();
+				doombaPivotRightThisMuch(5);
+				doombaForward();
+				doombaPivotLeftThisMuch(3);
+			}
+
+			doombaStop();
+			doombaJustWaitaLittle();
 			break;
 		}
 	}
